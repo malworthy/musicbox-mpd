@@ -1,6 +1,14 @@
 import sqlite3
 
 
+def in_memory_db():
+    connection = sqlite3.connect(":memory:")
+    connection.row_factory = sqlite3.Row
+    # connection.execute("create table library(artist text, album text)")
+
+    return connection
+
+
 def create_connection():
     connection = sqlite3.connect("musiclibrary.db")
     connection.row_factory = sqlite3.Row
@@ -50,6 +58,6 @@ def get_radio_url(db_conn, id):
     return result[0]
 
 
-def reset_queue(db_conn):
-    db_conn.execute("update queue set playing = null, canplay = 1")
-    db_conn.commit()
+# def reset_queue(db_conn):
+#    db_conn.execute("update queue set playing = null, canplay = 1")
+#    db_conn.commit()

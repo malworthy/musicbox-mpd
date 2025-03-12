@@ -286,11 +286,11 @@ async function getQueue() {
   for (const song of queue) {
     const listItem = document.createElement("li");
     const divText = document.createElement("div");
-    divText.innerHTML = `<h4>${i++}. ${song.tracktitle} ${fmtMSS(song.length)}</h4>
+    divText.innerHTML = `<h4>${i++}. ${song.title} ${fmtMSS(song.duration)}</h4>
     <p>${song.artist} - ${song.album}</p>`;
 
     const divButtons = document.createElement("div");
-    divButtons.appendChild(addButton("Del", () => removeFromQueue(song.queueId, listItem)));
+    divButtons.appendChild(addButton("Del", () => removeFromQueue(song.id, listItem)));
 
     listItem.appendChild(divText);
     listItem.appendChild(divButtons);

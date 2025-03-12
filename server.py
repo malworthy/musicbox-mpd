@@ -2,14 +2,17 @@ from bottle import route, post, run, request, app, static_file, delete
 from bottle_cors_plugin import cors_plugin
 import json
 import threading
-from pygame import mixer
-import pygame
-from player import playasync
-from data import create_connection, get_next_song, reset_queue, setplaying
+# from pygame import mixer
+# import pygame
+# from player import playasync
+from data import create_connection, get_next_song, setplaying
+import data
 import data
 import os
 import time
 import subprocess
+from mpd import MPDClient
+from musicplayer import MusicPlayer
 
 
 def query(sql, params):
@@ -79,7 +82,8 @@ def search():
     print(x)
     sql = """
         select album, case when count(*) > 1 then 'Various' else max(albumartist) end artist, null as tracktitle, 0 as id, 0 as length 
-        from (select distinct albumartist, album from library where album like ? or artist like ? or albumartist like ?) sq 
+        from (select distinct coalesce(albumartist, artist) as albumartist, album 
+        from library where album like ? or artist like ? or albumartist like ?) sq 
         group by album       
     """
 
@@ -111,19 +115,21 @@ def album():
 
 @post('/add/<id>')
 def add(id):
-    sql = "insert into queue(libraryid, canplay) values(?, 1)"
-    result = con.execute(sql, (id, ))
-    con.commit()
-    result = query("select count(*) as queueCount from queue", ())
+    sql = "select filename from library where id = ?"
+    result = query(sql, (id,))
+    uri = result[0]["filename"]
+    player.add_to_queue(uri)
+
+    result = query("select 1 as queueCount from library", ())  # placeholder
     return json.dumps(result[0])
 
 
 @delete('/<id>')
 def remove(id):
-    sql = "delete from queue where id = ?"
-    con.execute(sql, (id, ))
-    con.commit()
-    result = query("select count(*) as queueCount from queue", ())
+    params = request.json
+    player.remove_from_queue(id)
+
+    result = query("select 1 as queueCount from library", ())  # placeholder
     return json.dumps(result[0])
 
 
@@ -137,8 +143,7 @@ def remove():
 
 @route("/queue")
 def queue():
-    result = query(
-        "select q.id as queueId, l.* from queue q inner join library l on q.libraryid = l.id", ())
+    result = player.get_queue()
     return json.dumps(result)
 
 
@@ -201,9 +206,8 @@ def wrapped(year):
 
 @route("/queuestatus")
 def queue():
-    result = query(
-        "select count(*) as queueCount, sum(l.length) as queueLength from queue q inner join library l on q.libraryid = l.id", ())
-    return json.dumps(result[0])
+    result = player.get_queue()
+    return f"""{{ "queueCount" : {len(result)}, "queueLength" : {sum([float(x.get("duration")) for x in result])} }}"""
 
 
 @route("/history")
@@ -219,43 +223,15 @@ def history():
 
 @route("/status")
 def status():
-    if radio_process != None:
-        return """
-           { "playing": 2, "desc" : "Playing internet radio" }
+    return """
+           { "playing": 2, "desc" : "No implemented yet" }
         """
-
-    sql = """
-        select l.*, 1 as playing, (select count(*) from queue) as queueCount 
-        from queue q inner join library l on q.libraryid = l.id 
-        where playing is not null
-    """
-    result = query(sql, ())
-    if len(result) >= 1:
-        dict = result[0]
-        dict['paused'] = not mixer.music.get_busy()
-
-        return json.dumps(dict)
-
-    result = query(
-        "select count(*) as queueCount , 0 as playing from queue", ())
-    return json.dumps(result[0])
 
 
 @post('/play')
 def play():
-    if mixer.music.get_busy():
-        return """{"status" : "already playing"}"""
-
-    con.execute("update queue set canplay = 1")
-    con.commit()
-
-    next_song = get_next_song(con)
-    if next_song == None:
-        return """{"status" : "no songs in queue"}"""
-    setplaying(next_song['id'], con)
-    thread = threading.Thread(target=playasync, args=(next_song,))
-    thread.start()
-    return """{"status" : "play started", "id" : """ + f"{next_song['libraryid']}" + "}"
+    player.play()
+    return """{"status" : "play started", "id" : """ + f"{0}" + "}"
 
 
 @post('/stop')
@@ -263,7 +239,7 @@ def stop():
     con.execute("update queue set canplay = 0")
     con.execute("delete from queue where playing is not null")
     con.commit()
-    mixer.music.stop()
+    # mixer.music.stop()
     return """{"status" : "stopped"}"""
 
 
@@ -276,12 +252,12 @@ def skip():
 
 @post('/pause')
 def pause():
-    if mixer.music.get_busy():
-        mixer.music.pause()
-        return """{"paused" : true}"""
-    else:
-        mixer.music.unpause()
-        return """{"paused" : false}"""
+    # if mixer.music.get_busy():
+    #    mixer.music.pause()
+    #    return """{"paused" : true}"""
+    # else:
+    #    mixer.music.unpause()
+    return """{"paused" : false}"""
 
 
 @post('/queuealbum')
@@ -297,8 +273,8 @@ def queuealbum():
 @post('/playsong/<id>')
 def playsong(id):
     print("*** in playsong ***")
-    if mixer.music.get_busy():
-        return """{"status" : "already playing"}"""
+    # if mixer.music.get_busy():
+    #    return """{"status" : "already playing"}"""
     con.execute("delete from queue")
     add(id)
     return play()
@@ -306,18 +282,18 @@ def playsong(id):
 
 @route('/autoplay/<album>')
 def autoplay(album):
-    is_playing = mixer.music.get_busy()
-    if not is_playing:
-        con.execute("delete from queue")
+    # is_playing = mixer.music.get_busy()
+    # if not is_playing:
+    #    con.execute("delete from queue")
 
     con.execute(
         "insert into queue(libraryid) select id from library where album = ? and id not in (select libraryid from queue) order by cast(tracknumber as INT), filename", (album,))
     con.commit()
 
     message = f"The album {album} has been added to the queue"
-    if not is_playing:
-        play()
-        message = f"Playing album {album}"
+    # if not is_playing:
+    #    play()
+    #    message = f"Playing album {album}"
 
     return f'<html><body><div style="text-align: center"><h2>{message}</h2><a href="/ui">Click here for MusicBox</a></div></body></html>'
 
@@ -326,8 +302,8 @@ def autoplay(album):
 
 @post('/playalbum')
 def playalbum():
-    if mixer.music.get_busy():
-        return """{"status" : "already playing"}"""
+    # if mixer.music.get_busy():
+    #    return """{"status" : "already playing"}"""
 
     params = request.json
     con.execute("delete from queue")
@@ -369,12 +345,33 @@ def delete_mixtape(name):
     return """{"status" : "success"}"""
 
 
+def cache_library():
+    print("Caching library")
+    client = MPDClient()
+    client.timeout = 10
+    client.connect("musicbox", 6600)
+    print(client.mpd_version)
+    songs = client.search("any", "")
+    result = [(x.get("file"), x.get("title"), x.get("artist"), x.get("album"), x.get(
+        "albumartist"), x.get("track"), x.get("time"), x.get("date")) for x in songs]
+    client.disconnect()
+    try:
+        con.execute("create table library(id INTEGER PRIMARY KEY, filename text, tracktitle text, artist text, album text, albumartist text, tracknumber int, length int, year text)")
+    except:
+        print("Library table already exists")
+    con.executemany(
+        "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)", result)
+    print("Library cached")
+    # cur = con.cursor()
+    # xxx = query("select * from library limit 100", ())
+    # print(xxx)
+
+
 ##### ENTRY POINT #####
-con = create_connection()
+con = data.in_memory_db()
+player = MusicPlayer()
 
 radio_process = None
-
-reset_queue(con)
 
 f = open("config.json")
 config = json.load(f)
@@ -382,7 +379,12 @@ f.close()
 
 app = app()
 app.install(cors_plugin('*'))
-pygame.init()
-mixer.init()
+# pygame.init()
+# mixer.init()
 
+# client = MPDClient()
+# client.connect("musicbox", 6600)
+
+# print(client.mpd_version)
+cache_library()
 run(host=config["host"], port=config["port"])
