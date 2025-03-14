@@ -1,10 +1,14 @@
 let showingResults = false;
+let elapsed = 0;
+let duration = 0;
+let playStatus = "stop";
 
 ready(start);
 
 function start() {
   updateStatus();
-  setInterval(() => updateStatus(), 1000 * 10);
+  //setInterval(() => updateStatus(), 1000 * 10);
+  setInterval(() => updatePlayTime(), 1000);
   const input = document.getElementById("search");
 
   input.addEventListener("keydown", (e) => {
@@ -41,49 +45,62 @@ async function resetStatus() {
   const songDetails = await doAjax("GET", "status");
 
   if (songDetails.playing === 1) {
-    showCoverArt(songDetails.id);
+    showCoverArt(songDetails.libraryid);
   } else {
     showStartScreen();
   }
 }
 
+function updatePlayTime() {
+  const playTime = document.getElementById("time");
+  if (playStatus === "stop") {
+    playTime.innerHTML = "";
+    return;
+  } else if (playStatus === "play") {
+    elapsed++;
+    if (elapsed > duration) {
+      updateStatus();
+    }
+  }
+
+  playTime.innerHTML = `${fmtMSS(elapsed)} / ${fmtMSS(duration)}`;
+}
+
 async function updateStatus(updateContent = true) {
   const statusDiv = document.getElementById("status");
   const playBtn = document.getElementById("play");
+  const playTime = document.getElementById("time");
   const songDetails = await doAjax("GET", "status");
 
-  if (songDetails.playing === 1) {
-    const statusText = `<p>Now playing: ${songDetails.tracktitle} by ${songDetails.artist}</p>`;
+  statusDiv.className = songDetails.state === "pause" ? "blink" : "";
+  playStatus = songDetails.state;
+
+  if (songDetails.state === "play" || songDetails.state === "pause") {
+    elapsed = songDetails.elapsed;
+    duration = songDetails.duration;
+
+    const statusText = `<p>Now playing: ${songDetails.title} by ${songDetails.artist}</p>`;
     if (statusDiv.innerHTML != statusText) {
       statusDiv.innerHTML = statusText;
       playBtn.innerHTML = "Stop";
       playBtn.onclick = () => stopPlay();
-      if (updateContent && !showingResults) showCoverArt(songDetails.id);
-    }
-  } else if (songDetails.playing === 2) {
-    const statusText = `<p>${songDetails.desc}</p>`;
-    if (statusDiv.innerHTML != statusText) {
-      statusDiv.innerHTML = statusText;
-      playBtn.innerHTML = "Stop";
-      playBtn.onclick = () => stopRadio();
+      if (updateContent && !showingResults) showCoverArt(songDetails.libraryid);
+      playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
     }
   } else {
+    isPlaying = false;
+    playTime.innerHTML = "";
     statusDiv.innerHTML = "<p>Not Playing</p>";
     playBtn.innerHTML = "Play";
     playBtn.onclick = () => play();
     if (updateContent && !showingResults) showStartScreen();
   }
-  await updateQueueStatus(songDetails.queueCount);
+  await updateQueueStatus();
 }
 
 async function stopPlay() {
-  clearPaused();
   await doAjax("POST", "stop");
-  const statusDiv = document.getElementById("status");
-  const playBtn = document.getElementById("play");
-  statusDiv.innerHTML = "<p>Not Playing</p>";
-  playBtn.innerHTML = "Play";
-  playBtn.onclick = () => play();
+  updateStatus();
 }
 
 async function stopRadio() {
@@ -98,57 +115,57 @@ async function stopRadio() {
 
 async function pause() {
   result = await doAjax("POST", "pause");
-  setPaused(result.paused);
+  updateStatus();
 }
 
-function clearPaused() {
-  const status = document.getElementById("status");
-  status.className = "";
-}
+// function clearPaused() {
+//   const status = document.getElementById("status");
+//   status.className = "";
+// }
 
-function setPaused(paused) {
-  const status = document.getElementById("status");
-  status.className = paused ? "blink" : "";
-}
+// function setPaused(paused) {
+//   const status = document.getElementById("status");
+//   status.className = paused ? "blink" : "";
+// }
 
 async function play() {
-  clearPaused();
+  // clearPaused();
   showingResults = false;
   const status = await doAjax("POST", "play");
   //if (status.status === "play started") showCoverArt(status.id);
   updateStatus();
 }
 
-async function playAlbum(album, artist) {
+async function playAlbum(path) {
   showingResults = false;
-  const status = await doAjax("POST", "playalbum", { album: album, artist: artist });
+  const status = await doAjax("POST", "playalbum", { path: path });
   //if (status.status === "play started") showCoverArt(status.id);
   updateStatus();
 }
 
-async function queueAlbum(album, artist) {
-  await doAjax("POST", "queuealbum", { album: album, artist: artist });
+async function queueAlbum(path) {
+  await doAjax("POST", "queuealbum", { path: path });
   updateStatus();
 }
 
 async function skip() {
-  clearPaused();
+  // clearPaused();
   await doAjax("POST", "skip");
   updateStatus();
 }
 
-async function updateQueueStatus(count) {
+async function updateQueueStatus() {
   const status = await doAjax("GET", "queuestatus");
   document.getElementById("queue").innerHTML = `Queue (${status.queueCount}/${fmtMSS(status.queueLength)})`;
 }
 
 async function queueSong(id) {
   const result = await doAjax("POST", `add/${id}`);
-  await updateQueueStatus(result.queueCount);
+  await updateQueueStatus();
 }
 
 async function getAlbum(name) {
-  name = decodeURIComponent(name);
+  //name = decodeURIComponent(name);
   var songs = await doAjax("GET", `album?search=${encodeURIComponent(name)}`);
   if (songs === null) return;
   let i = 1;
@@ -162,31 +179,6 @@ async function getAlbum(name) {
     const divButtons = document.createElement("div");
     divButtons.appendChild(addButton("Play", () => playOneSong(song.id)));
     divButtons.appendChild(addButton("Add", () => queueSong(song.id)));
-
-    listItem.appendChild(divText);
-    listItem.appendChild(divButtons);
-    document.getElementById("content").appendChild(listItem);
-  }
-}
-
-async function playRadio(id) {
-  await doAjax("GET", `radio/play/${id}`);
-  await updateStatus();
-}
-
-async function radioStations() {
-  console.log("in radio stations");
-  var stations = await doAjax("GET", `radio/list`);
-  if (stations === null) return;
-  let i = 1;
-  document.getElementById("content").innerHTML = "";
-  for (const s of stations) {
-    const listItem = document.createElement("li");
-    const divText = document.createElement("div");
-    divText.innerHTML = `<h4>${i++}. ${s.name}</h4>`;
-
-    const divButtons = document.createElement("div");
-    divButtons.appendChild(addButton("Play", () => playRadio(s.id)));
 
     listItem.appendChild(divText);
     listItem.appendChild(divButtons);
@@ -243,7 +235,7 @@ async function doSearch() {
       divText.innerHTML = `<h4>${album.tracktitle}</h4><p>${album.artist} - ${album.album}</a></p>`;
     } else {
       divText.innerHTML = `<h4>${album.artist}</h4><p><a href="#" onclick="getAlbum('${encodeURIComponent(
-        album.album
+        album.path
       ).replace(/'/g, "%27")}')"> ${album.album}</a></p>`;
     }
     const divButtons = document.createElement("div");
@@ -251,8 +243,8 @@ async function doSearch() {
       divButtons.appendChild(addButton("Play", () => playOneSong(album.id)));
       divButtons.appendChild(addButton("Add", () => queueSong(album.id)));
     } else {
-      divButtons.appendChild(addButton("Play", () => playAlbum(album.album, album.artist)));
-      divButtons.appendChild(addButton("Add", () => queueAlbum(album.album, album.artist)));
+      divButtons.appendChild(addButton("Play", () => playAlbum(album.path)));
+      divButtons.appendChild(addButton("Add", () => queueAlbum(album.path)));
     }
     listItem.appendChild(divText);
     listItem.appendChild(divButtons);
@@ -268,7 +260,7 @@ function fmtMSS(s) {
 
 async function removeFromQueue(id, row) {
   const result = await doAjax("DELETE", `${id}`);
-  await updateQueueStatus(result.queueCount);
+  await updateQueueStatus();
   row.parentNode.removeChild(row);
 }
 
@@ -296,7 +288,7 @@ async function getQueue() {
     listItem.appendChild(divButtons);
     document.getElementById("content").appendChild(listItem);
   }
-  await updateQueueStatus(i - 1);
+  await updateQueueStatus();
 }
 
 async function getHistory() {
