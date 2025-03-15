@@ -3,7 +3,9 @@ from mpd import MPDClient
 
 class MusicPlayer:
 
-    def __init__(self):
+    def __init__(self, host="localhost", port=6600):
+        self.host = host
+        self.port = port
         self.client = self.create_client()
 
     """ Check if the client is connected to the server, if not, connect """
@@ -13,7 +15,7 @@ class MusicPlayer:
             self.client.ping()
         except Exception as e:
             print(f"Reconnecting to server: {e}")
-            self.client.connect("musicbox", 6600)
+            self.client.connect(self.host, self.port)
 
     def create_client(self):
         client = MPDClient()
@@ -21,6 +23,21 @@ class MusicPlayer:
         client.idletimeout = None
         client.connect("musicbox", 6600)
         return client
+
+    def cache_library(self, con):
+        self.connect()
+        print(self.client.mpd_version)
+        songs = self.client.search("any", "")
+        result = [(x.get("file"), x.get("title"), x.get("artist"), x.get("album"), x.get(
+            "albumartist"), x.get("track"), x.get("time"), x.get("date")) for x in songs]
+        # client.disconnect()
+        try:
+            con.execute("create table library(id INTEGER PRIMARY KEY, filename text, tracktitle text, artist text, album text, albumartist text, tracknumber int, length int, year text)")
+        except:
+            print("Library table already exists")
+        con.executemany(
+            "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)", result)
+        print("Library cached")
 
     def add_to_queue(self, uri):
         try:

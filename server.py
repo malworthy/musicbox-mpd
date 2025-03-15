@@ -216,33 +216,8 @@ def delete_mixtape(name):
     return status_json("OK")
 
 
-def cache_library():
-    print("Caching library")
-    client = MPDClient()
-    client.timeout = 10
-    client.connect("musicbox", 6600)
-    print(client.mpd_version)
-    songs = client.search("any", "")
-    result = [(x.get("file"), x.get("title"), x.get("artist"), x.get("album"), x.get(
-        "albumartist"), x.get("track"), x.get("time"), x.get("date")) for x in songs]
-    client.disconnect()
-    try:
-        con.execute("create table library(id INTEGER PRIMARY KEY, filename text, tracktitle text, artist text, album text, albumartist text, tracknumber int, length int, year text)")
-    except:
-        print("Library table already exists")
-    con.executemany(
-        "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)", result)
-    print("Library cached")
-    # cur = con.cursor()
-    # xxx = query("select * from library limit 100", ())
-    # print(xxx)
-
-
 ##### ENTRY POINT #####
 con = data.in_memory_db()
-player = MusicPlayer()
-
-radio_process = None
 
 f = open("config.json")
 config = json.load(f)
@@ -250,12 +225,6 @@ f.close()
 
 app = app()
 app.install(cors_plugin('*'))
-# pygame.init()
-# mixer.init()
-
-# client = MPDClient()
-# client.connect("musicbox", 6600)
-
-# print(client.mpd_version)
-cache_library()
+player = MusicPlayer(config["mpd_host"], config["mpd_port"])
+player.cache_library(con)
 run(host=config["host"], port=config["port"])

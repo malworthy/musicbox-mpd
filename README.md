@@ -1,8 +1,10 @@
 # musicbox-mpd
 
-A lightweight music server for playing local files, with a retro user interface. Like mopidy but without the streaming. Perfect for running on a raspberry pi.
+A lightweight web based MPD client.
 
 Written in python and vanilla.js.
+
+This is still a work in progress and it not ready for use yet.
 
 ## installing/running
 
@@ -11,31 +13,23 @@ Install the following python dependencies:
 ```
 pip install bottle
 pip install bottle-cors-plugin
-pip install pygame
-pip install music-tag
-```
-
-You may also need install some additional libraries (command for debian based systems):
-
-```
-sudo apt-get install libsdl2-mixer-2.0-0 libsdl2-image-2.0-0 libsdl2-2.0-0
+pip install python-mpd2
 ```
 
 Clone the repository:
 
 ```
-git clone https://github.com/malworthy/musicbox.git
+git clone https://github.com/malworthy/musicbox-mpd.git
 ```
 
 Create a config.json file:
 
 ```
 {
-    "library" : "/path/to/library/",
     "host" : "localhost",
     "port" : 8080,
-    "extensions" : ["mp3", "flac"],
-    "radio_player": "mplayer",
+    "mpd_host" : "localhost",
+    "mpd_port" : 6600,
     "stations" : [
         {"name":"3RRR Melbourne", "url":"https://ondemand.rrr.org.au/stream/ws-hq.m3u"},
         {"name": "PBS 106.7FM", "url" : "https://playerservices.streamtheworld.com/api/livestream-redirect/3PBS_FMAAC128.m3u8"}
@@ -49,20 +43,6 @@ Create a config.json file:
 - Supported audio formats: mp3, ogg, wav and flac.
 - "radio_player" : application used to play streams e.g. mplayer, cvlc
 - "stations" : list of streaming radio stations (name, url)
-
-Update database with library:
-
-```
-python update_library.py --all
-```
-
-To add radio stations to the library:
-
-```
-python update_library.py --stations
-```
-
-Run the server:
 
 ```
 python server.py
@@ -116,4 +96,3 @@ Commands
 - :mix [name of mixtape] - save contents of current queue to a 'mixtape' (aka playlist)
 - :delmix [name of mixtape] - delete a mixtape
 - :rand [x] - add 'x' number of random songs to the queue
-- :hist - show history of songs played
