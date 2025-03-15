@@ -23,7 +23,7 @@ nav ul {
   justify-content: flex-start;
   box-sizing: border-box;
   padding: 5px;
-  background: purple;
+  background: darkblue;
 }
 
 .content-list {
@@ -48,7 +48,7 @@ nav ul {
   justify-content: flex-start;
   padding-left: 20px;
   padding-right: 20px;
-  background: purple;
+  background: darkblue;
 }
 
 li {
@@ -80,7 +80,7 @@ section {
 
 .footer {
   padding: 0px;
-  background: purple;
+  background: darkblue;
   color: #da2;
   position: sticky;
   bottom: 0;
@@ -98,7 +98,7 @@ section {
 }
 
 button {
-  border: 4px outset gray;
+  border: 3px outset gray;
   background-color: black;
   color: white;
   cursor: pointer;

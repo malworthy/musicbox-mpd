@@ -61,6 +61,11 @@ def get_album(con, path):
     return query(con, sql, (path,))
 
 
+def get_random_songs(con, number):
+    sql = f"select filename from library order by random() limit {number}"
+    return query(con, sql, ())
+
+
 def query(con, sql, params):
     res = con.execute(sql, params)
     rows = res.fetchall()

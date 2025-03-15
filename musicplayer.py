@@ -1,4 +1,5 @@
 from mpd import MPDClient
+import os
 
 
 class MusicPlayer:
@@ -136,9 +137,19 @@ class MusicPlayer:
             return False
         return True
 
-    def get_cover_art(self, uri):
+    def get_cover_art(self, uri, img_folder):
+        if img_folder == None:
+            return None
+
         try:
-            filename = "c:\\tmp\\cover.jpg"
+            folder = os.path.dirname(uri)
+            folder = folder.replace("/", "-").replace("\\", "-")
+            filename = "_" + "".join(
+                x for x in folder if x.isalnum() or x == "-") + ".jpg"
+            filename = os.path.join(img_folder, filename)
+            if os.path.exists(filename):
+                return filename
+
             self.connect()
             img = self.client.albumart(uri)
             with open(filename, "wb") as file:
@@ -202,12 +213,3 @@ class MusicPlayer:
             print(f"Error loading playlist: {e}")
             return False
         return True
-
-    # def add_album(self, uri):
-    #     try:
-    #         self.connect()
-    #         self.client.findadd("album", uri)
-    #     except Exception as e:
-    #         print(f"Error adding album to queue: {e}")
-    #         return False
-    #     return True

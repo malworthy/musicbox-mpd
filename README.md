@@ -30,6 +30,8 @@ Create a config.json file:
     "port" : 8080,
     "mpd_host" : "localhost",
     "mpd_port" : 6600,
+    "image_folder" : "/tmp/musicbox",
+    "default_image" : "/tmp/musicbox/default.gif",
     "stations" : [
         {"name":"3RRR Melbourne", "url":"https://ondemand.rrr.org.au/stream/ws-hq.m3u"},
         {"name": "PBS 106.7FM", "url" : "https://playerservices.streamtheworld.com/api/livestream-redirect/3PBS_FMAAC128.m3u8"}

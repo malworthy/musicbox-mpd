@@ -34,7 +34,11 @@ def ui2(file):
 @route('/coverart/<id>')
 def coverart(id):
     uri = data.get_uri(con, id)
-    cover = player.get_cover_art(uri)
+    image_folder = config.get("image_folder")
+
+    cover = player.get_cover_art(uri, image_folder)
+    if cover == None:
+        cover = config.get("default_image")
 
     if not cover == None:
         path = os.path.dirname(cover)
@@ -146,43 +150,22 @@ def playsong(id):
 # Use for scanning QR codes TODO: Implement
 
 
-@route('/autoplay/<album>')
-def autoplay(album):
-    # is_playing = mixer.music.get_busy()
-    # if not is_playing:
-    #    con.execute("delete from queue")
-
-    con.execute(
-        "insert into queue(libraryid) select id from library where album = ? and id not in (select libraryid from queue) order by cast(tracknumber as INT), filename", (album,))
-    con.commit()
-
-    message = f"The album {album} has been added to the queue"
-    # if not is_playing:
-    #    play()
-    #    message = f"Playing album {album}"
-
-    return f'<html><body><div style="text-align: center"><h2>{message}</h2><a href="/ui">Click here for MusicBox</a></div></body></html>'
-
-    # return static_file("ui.html", "./ui/")
-
-
 @post('/playalbum')
 def playalbum():
     status = player.status()
     if status.get("state") == "play":
         return status_json("Already playing")
     player.clear_queue()
-    player.add_album(request.json["album"])
+    uri = request.json["path"][:-1]
+    player.add_to_queue(uri)
     player.play()
     return status_json("OK")
 
 
 @post('/rand/<num>')
 def random_queue(num):
-    con.execute("delete from queue")
-    con.execute(
-        f"insert into queue(libraryid)  select id from library order by random() limit {num}", ())
-    con.commit()
+    for song in data.get_random_songs(con, num):
+        player.add_to_queue(song["filename"])
     return status_json("OK")
 
 

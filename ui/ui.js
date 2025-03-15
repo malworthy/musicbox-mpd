@@ -66,30 +66,36 @@ function updatePlayTime() {
 }
 
 async function updateStatus(updateContent = true) {
-  const statusDiv = document.getElementById("status");
+  //const statusDiv = document.getElementById("status");
+  const songName = document.getElementById("songName");
+  const artistName = document.getElementById("artistName");
   const playBtn = document.getElementById("play");
   const playTime = document.getElementById("time");
   const songDetails = await doAjax("GET", "status");
 
-  statusDiv.className = songDetails.state === "pause" ? "blink" : "";
+  songName.className = songDetails.state === "pause" ? "blink" : "";
   playStatus = songDetails.state;
 
   if (songDetails.state === "play" || songDetails.state === "pause") {
     elapsed = songDetails.elapsed;
     duration = songDetails.duration;
 
-    const statusText = `<p>${songDetails.title} by ${songDetails.artist}</p>`;
-    if (statusDiv.innerHTML != statusText) {
-      statusDiv.innerHTML = statusText;
-      playBtn.innerHTML = "Stop";
-      playBtn.onclick = () => stopPlay();
-      if (updateContent && !showingResults) showCoverArt(songDetails.libraryid);
-      playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
-    }
+    //const statusText = `<p>${songDetails.title} by ${songDetails.artist}</p>`;
+    //if (statusDiv.innerHTML != statusText) {
+    //statusDiv.innerHTML = statusText;
+    songName.innerHTML = songDetails.title;
+    artistName.innerHTML = songDetails.artist;
+    playBtn.innerHTML = "Stop";
+    playBtn.onclick = () => stopPlay();
+    if (updateContent && !showingResults) showCoverArt(songDetails.libraryid);
+    playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
+    //}
   } else {
     isPlaying = false;
     playTime.innerHTML = "";
-    statusDiv.innerHTML = "<p>Not Playing</p>";
+    //statusDiv.innerHTML = "<p>Not Playing</p>";
+    songName.innerHTML = "Stopped";
+    artistName.innerHTML = "Playing";
     playBtn.innerHTML = "Play";
     playBtn.onclick = () => play();
     if (updateContent && !showingResults) showStartScreen();
@@ -303,10 +309,10 @@ function showCoverArt(id) {
   <img class="center" width=300 height=300 src="coverart/${id}" />
   <div class="center">
     <ul class="controls">
-      <li>
+      <li style="background-color: black;">
         <button onclick="skip();">Skip</button>
       </li>
-      <li>
+      <li style="background-color: black;">
         <button id="pause" onclick="pause()">Pause</button>
       </li>
     </ul>
