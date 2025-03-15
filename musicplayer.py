@@ -149,6 +149,43 @@ class MusicPlayer:
             return False
         return True
 
+    def update_playlist(self, name):
+        try:
+            self.connect()
+            self.client.rm(name)
+            self.client.save(name)
+        except Exception as e:
+            print(f"Error updating playlist: {e}")
+            return False
+        return True
+
+    def delete_playlist(self, name):
+        try:
+            self.connect()
+            self.client.rm(name)
+        except Exception as e:
+            print(f"Error deleting playlist: {e}")
+            return False
+        return True
+
+    def get_playlists(self):
+        try:
+            self.connect()
+            playlists = self.client.listplaylists()
+        except Exception as e:
+            print(f"Error getting playlists: {e}")
+            return []
+        return playlists
+
+    def load_playlist(self, name):
+        try:
+            self.connect()
+            self.client.load(name)
+        except Exception as e:
+            print(f"Error loading playlist: {e}")
+            return False
+        return True
+
     # def add_album(self, uri):
     #     try:
     #         self.connect()

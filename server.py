@@ -51,9 +51,6 @@ def search():
 @route('/album')
 def album():
     search = unquote(request.query.search)
-    # sql = "select * from library where album = ? order by artist, album, cast(tracknumber as INT), filename"
-    # result = query(sql, (search,))
-
     result = data.get_album(con, search)
 
     return json.dumps(result)
@@ -87,7 +84,7 @@ def queue():
 
 
 @route("/queuestatus")
-def queue():
+def queuestatus():
     result = player.get_queue()
     return f"""{{ "queueCount" : {len(result)}, "queueLength" : {sum([float(x.get("duration")) for x in result])} }}"""
 
@@ -186,21 +183,37 @@ def random_queue(num):
     con.execute(
         f"insert into queue(libraryid)  select id from library order by random() limit {num}", ())
     con.commit()
-    return """{"status" : "success"}"""
+    return status_json("OK")
+
+
+@route("/mix")
+def get_mixtapes():
+    result = player.get_playlists()
+    return json.dumps(result)
+
+
+@post('/loadmix/<name>')
+def load_mixtape(name):
+    player.load_playlist(name)
+    return status_json("OK")
+
+
+@post('/savemix/<name>')
+def load_mixtape(name):
+    player.update_playlist(name)
+    return status_json("OK")
 
 
 @post('/mix/<name>')
 def create_mixtape(name):
     player.save_playlist(name)
-    return """{"status" : "success"}"""
+    return status_json("OK")
 
 
 @delete('/mix/<name>')
 def delete_mixtape(name):
-    con.execute(
-        "delete from library where albumartist = 'mixtape' and album = ?", (name,))
-    con.commit()
-    return """{"status" : "success"}"""
+    player.delete_playlist(name)
+    return status_json("OK")
 
 
 def cache_library():
