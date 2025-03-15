@@ -2,6 +2,7 @@ let showingResults = false;
 let elapsed = 0;
 let duration = 0;
 let playStatus = "stop";
+let prevRowIndex = null;
 
 ready(start);
 
@@ -62,11 +63,10 @@ function updatePlayTime() {
     }
   }
 
-  playTime.innerHTML = `${fmtMSS(elapsed)} / ${fmtMSS(duration)}`;
+  playTime.innerHTML = `${fmtMSS(elapsed)}/${fmtMSS(duration)}`;
 }
 
 async function updateStatus(updateContent = true) {
-  //const statusDiv = document.getElementById("status");
   const songName = document.getElementById("songName");
   const artistName = document.getElementById("artistName");
   const playBtn = document.getElementById("play");
@@ -79,21 +79,15 @@ async function updateStatus(updateContent = true) {
   if (songDetails.state === "play" || songDetails.state === "pause") {
     elapsed = songDetails.elapsed;
     duration = songDetails.duration;
-
-    //const statusText = `<p>${songDetails.title} by ${songDetails.artist}</p>`;
-    //if (statusDiv.innerHTML != statusText) {
-    //statusDiv.innerHTML = statusText;
     songName.innerHTML = songDetails.title;
     artistName.innerHTML = songDetails.artist;
     playBtn.innerHTML = "Stop";
     playBtn.onclick = () => stopPlay();
     if (updateContent && !showingResults) showCoverArt(songDetails.libraryid);
     playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
-    //}
   } else {
     isPlaying = false;
     playTime.innerHTML = "";
-    //statusDiv.innerHTML = "<p>Not Playing</p>";
     songName.innerHTML = "Stopped";
     artistName.innerHTML = "Playing";
     playBtn.innerHTML = "Play";
@@ -136,8 +130,10 @@ async function skip() {
 }
 
 async function updateQueueStatus() {
+  if (playStatus != "stop") return;
   const status = await doAjax("GET", "queuestatus");
-  document.getElementById("queue").innerHTML = `Queue (${status.queueCount}/${fmtMSS(status.queueLength)})`;
+  document.getElementById("songName").innerHTML = "Queue";
+  document.getElementById("artistName").innerHTML = `${status.queueCount} Songs (${fmtMSS(status.queueLength)})`;
 }
 
 async function queueSong(id) {
@@ -145,8 +141,10 @@ async function queueSong(id) {
   await updateQueueStatus();
 }
 
-async function getAlbum(name) {
+async function getAlbum(name, rowIndex) {
   //name = decodeURIComponent(name);
+  //console.log("id of element", o.id);
+  prevRowIndex = rowIndex;
   var songs = await doAjax("GET", `album?search=${encodeURIComponent(name)}`);
   if (songs === null) return;
   let i = 1;
@@ -154,6 +152,7 @@ async function getAlbum(name) {
   for (const song of songs) {
     const listItem = document.createElement("li");
     const divText = document.createElement("div");
+    listItem.id = `song_row${i}`;
     divText.innerHTML = `<h4>${i++}. ${song.tracktitle} ${fmtMSS(song.length)}</h4>
     <p>${song.artist} - ${song.album}</p>`;
 
@@ -165,6 +164,8 @@ async function getAlbum(name) {
     listItem.appendChild(divButtons);
     document.getElementById("content").appendChild(listItem);
   }
+  const firstRow = document.getElementById("song_row1");
+  firstRow?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 }
 
 async function getMixtapes() {
@@ -207,6 +208,7 @@ function addButton(text, clickEvent) {
   let button = document.createElement("button");
   button.textContent = text;
   button.onclick = clickEvent;
+  button.style.margin = "5px";
   return button;
 }
 
@@ -239,17 +241,18 @@ async function processCommand() {
 async function doSearch() {
   const search = document.getElementById("search").value;
   const albums = await doAjax("GET", `search?search=${search}`);
-
+  let i = 0;
   document.getElementById("content").innerHTML = "";
   for (const album of albums) {
     const listItem = document.createElement("li");
+    listItem.id = `row${i++}`;
     const divText = document.createElement("div");
     if (album.tracktitle) {
       divText.innerHTML = `<h4>${album.tracktitle}</h4><p>${album.artist} - ${album.album}</a></p>`;
     } else {
       divText.innerHTML = `<h4>${album.artist}</h4><p><a href="#" onclick="getAlbum('${encodeURIComponent(
         album.path
-      ).replace(/'/g, "%27")}')"> ${album.album}</a></p>`;
+      ).replace(/'/g, "%27")}', ${i - 1})"> ${album.album}</a></p>`;
     }
     const divButtons = document.createElement("div");
     if (album.tracktitle) {
@@ -262,6 +265,13 @@ async function doSearch() {
     listItem.appendChild(divText);
     listItem.appendChild(divButtons);
     document.getElementById("content").appendChild(listItem);
+  }
+  if (prevRowIndex != null) {
+    //if (prevRowIndex > 0) prevRowIndex--;
+    const prevElement = `row${prevRowIndex}`;
+    const element = document.getElementById(prevElement);
+    element?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+    prevRowIndex = 0;
   }
 }
 
@@ -320,17 +330,24 @@ function showCoverArt(id) {
   `;
 }
 
+function popSearch(command) {
+  const element = document.getElementById("search");
+  element.value = command;
+}
+
 function showStartScreen() {
   const doc = document.getElementById("content");
+
   doc.innerHTML = `
         <li>
           <div style="max-width: 100%;">
             <h2>MusicBox</h2>
             <h3>Commands</h3>
-            <p><strong>:clear</strong>  - clear the current queue</p>
-            <p><strong>:mix [name of mixtape]</strong> - save contents of current queue to a 'mixtape' (aka playlist)</p>
-            <p><strong>:delmix [name of mixtape]</strong> - delete a mixtape</p>
-            <p><strong>:rand [x]</strong> - add 'x' number of random songs to the queue</p>
+            <p><strong><a href="#" onclick="popSearch(':clear')">:clear</a></strong>  - clear the current queue</p>
+            <p><strong><a href="#" onclick="popSearch(':mix')">:mix</a> - list all mixtapes</p>
+            <p><strong><a href="#" onclick="popSearch(':mix ')">:mix [name of mixtape]</a></strong> - save contents of current queue to a 'mixtape' (aka playlist)</p>
+            <p><strong><a href="#" onclick="popSearch(':delmix ')">:delmix [name of mixtape]</a></strong> - delete a mixtape</p>
+            <p><strong><a href="#" onclick="popSearch(':rand ')">:rand [x]</a></strong> - add 'x' number of random songs to the queue</p>
           </div>
         </li>
   `;
