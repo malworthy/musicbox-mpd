@@ -137,6 +137,16 @@ class MusicPlayer:
             return False
         return True
 
+    def volume(self, vol):
+        try:
+            self.connect()
+            self.client.volume(vol)
+            s = self.client.status()
+            return s.get("volume")
+        except Exception as e:
+            print(f"Error setting volume: {e}")
+            return "Cannot set volume"
+
     def get_cover_art(self, uri, img_folder):
         if img_folder == None:
             return None

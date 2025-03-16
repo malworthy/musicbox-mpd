@@ -64,7 +64,7 @@ Example of installing as a service on a rasperry pi.
 
 ```
 [Unit]
-Description=MusicBox Music Server
+Description=MusicBox MPD Client
 After=multi-user.target
 
 [Service]
@@ -72,7 +72,7 @@ Type=simple
 Restart=always
 User=pi
 WorkingDirectory=/home/pi/code/musicbox
-ExecStart=/usr/bin/python3 /home/pi/code/musicbox/server.py
+ExecStart=/home/pi/python-venv/bin/python /home/pi/code/musicbox/server.py
 
 [Install]
 WantedBy=multi-user.target

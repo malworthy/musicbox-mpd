@@ -25,7 +25,7 @@ def get_id(con, uri):
 def search(con, search):
     include_songs = len(search) > 1
     x = f"%{search}%"
-    print(x)
+
     sql = """
         select album, 
         case when count(*) > 1 then 'Various' else max(albumartist) end artist, 
@@ -36,7 +36,7 @@ def search(con, search):
         from (
             select distinct coalesce(albumartist, artist) as albumartist, album,rtrim(filename, replace(filename, '/', '')) as path
             from library 
-            where album like ? or artist like ? or albumartist like ?
+            where album like ? or artist like ? or albumartist like ? or year like ?
         ) sq 
         group by album, path     
     """
@@ -51,9 +51,9 @@ def search(con, search):
     sql += "order by tracktitle, artist;"
 
     if include_songs:
-        return query(con, sql, (x, x, x, x))
+        return query(con, sql, (x, x, x, x, x))
     else:
-        return query(con, sql, (x, x, x))
+        return query(con, sql, (x, x, x, x))
 
 
 def get_album(con, path):

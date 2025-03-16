@@ -208,7 +208,7 @@ function addButton(text, clickEvent) {
   let button = document.createElement("button");
   button.textContent = text;
   button.onclick = clickEvent;
-  button.style.margin = "5px";
+  button.style.margin = "3px";
   return button;
 }
 
@@ -313,6 +313,22 @@ async function getQueue() {
   await updateQueueStatus();
 }
 
+let adjustingVolume = false;
+async function volume(amount) {
+  const result = await doAjax("POST", `volume/${amount}`);
+  const vol = document.getElementById("vol");
+  vol.innerHTML = `${result.status} %`;
+  vol.classList = " center fade-in-text";
+  if (adjustingVolume) return;
+
+  setTimeout(() => {
+    vol.classList = "center fade-out-text";
+    adjustingVolume = false;
+  }, 20000);
+
+  adjustingVolume = true;
+}
+
 function showCoverArt(id) {
   const doc = document.getElementById("content");
   doc.innerHTML = `
@@ -320,13 +336,20 @@ function showCoverArt(id) {
   <div class="center">
     <ul class="controls">
       <li style="background-color: black;">
+        <button onclick="volume(-5);">-</button>
+      </li>
+      <li style="background-color: black;">
         <button onclick="skip();">Skip</button>
       </li>
       <li style="background-color: black;">
         <button id="pause" onclick="pause()">Pause</button>
       </li>
+      <li style="background-color: black;">
+        <button onclick="volume(5);">+</button>
+      </li>
     </ul>
   </div>
+  <div class="center" id="vol"></div>
   `;
 }
 

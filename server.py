@@ -128,6 +128,12 @@ def pause():
     return status_json("OK")
 
 
+@post('/volume/<vol>')
+def volume(vol):
+    result = player.volume(vol)
+    return status_json(result)
+
+
 @post('/queuealbum')
 def queuealbum():
     params = request.json
@@ -142,8 +148,9 @@ def playsong(id):
     status = player.status()
     if status.get("state") == "play":
         return status_json("Already playing")
+    uri = data.get_uri(con, id)
     player.clear_queue()
-    player.add_to_queue(id)
+    player.add_to_queue(uri)
     player.play()
     return status_json("OK")
 
