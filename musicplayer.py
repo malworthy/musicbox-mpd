@@ -109,7 +109,8 @@ class MusicPlayer:
             s = self.client.status()
             songid = s.get("songid")
             result = dict(volume=s.get("volume"), state=s.get("state"), songid=s.get(
-                "songid"), elapsed=s.get("elapsed"), duration=s.get("duration"))
+                "songid"), elapsed=s.get("elapsed"), duration=s.get("duration"), song=s.get("song"),
+                audio=s.get("audio"), updating=s.get("updating_db"), playlistlength=s.get("playlistlength"))
             if songid != None:
                 d = self.client.playlistid(songid)
 

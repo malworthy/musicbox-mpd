@@ -3,6 +3,7 @@ let elapsed = 0;
 let duration = 0;
 let playStatus = "stop";
 let prevRowIndex = null;
+let songNo = 0;
 
 ready(start);
 
@@ -42,12 +43,11 @@ const doAjax = async (verb, endpoint, data = null) => {
 
 async function resetStatus() {
   showingResults = false;
-  const songDetails = await doAjax("GET", "status");
 
-  if (songDetails.playing === 1) {
-    showCoverArt(songDetails.libraryid);
-  } else {
+  if (playStatus === "stop") {
     showStartScreen();
+  } else {
+    updateStatus();
   }
 }
 
@@ -75,6 +75,7 @@ async function updateStatus(updateContent = true) {
 
   songName.className = songDetails.state === "pause" ? "blink" : "";
   playStatus = songDetails.state;
+  songNo = Number(songDetails.song);
 
   if (songDetails.state === "play" || songDetails.state === "pause") {
     elapsed = songDetails.elapsed;
@@ -130,10 +131,14 @@ async function skip() {
 }
 
 async function updateQueueStatus() {
-  if (playStatus != "stop") return;
   const status = await doAjax("GET", "queuestatus");
-  document.getElementById("songName").innerHTML = "Queue";
-  document.getElementById("artistName").innerHTML = `${status.queueCount} Songs (${fmtMSS(status.queueLength)})`;
+  if (playStatus == "stop") {
+    document.getElementById("songName").innerHTML = "Queue";
+    document.getElementById("artistName").innerHTML = `${status.queueCount} Songs (${fmtMSS(status.queueLength)})`;
+    document.getElementById("queue").innerHTML = "";
+  } else {
+    document.getElementById("queue").innerHTML = `${songNo + 1} of ${status.queueCount}`;
+  }
 }
 
 async function queueSong(id) {
