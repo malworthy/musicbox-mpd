@@ -6,6 +6,20 @@ Written in python and vanilla.js.
 
 This is still a work in progress and it not ready for use yet.
 
+## Features
+
+- Mobile friendly interface
+- Album centered design
+- Playback controls: Play, Pause, Stop, Next
+- Volume control
+- Album art display
+- Play queue
+- Saved playlist support
+- Search on Album, Artist, Songname and Year
+- Add any number of random songs to the queue
+- Intelligent handling of complilations with multiple artists
+- Easy to install with minimal dependencies (just 3 python libraries)
+
 ## installing/running
 
 Install the following python dependencies:
@@ -26,7 +40,7 @@ Create a config.json file:
 
 ```
 {
-    "host" : "localhost",
+    "host" : "0.0.0.0",
     "port" : 8080,
     "mpd_host" : "localhost",
     "mpd_port" : 6600,
@@ -38,12 +52,8 @@ Create a config.json file:
     ]
 }
 ```
-
-- Change "library" to point to your music library.
 - Change "host" to "0.0.0.0" to allow remote connections to the server.
 - Change "port" if need the server to run on a different port.
-- Supported audio formats: mp3, ogg, wav and flac.
-- "radio_player" : application used to play streams e.g. mplayer, cvlc
 - "stations" : list of streaming radio stations (name, url)
 
 ```
@@ -71,8 +81,8 @@ After=multi-user.target
 Type=simple
 Restart=always
 User=pi
-WorkingDirectory=/home/pi/code/musicbox
-ExecStart=/home/pi/python-venv/bin/python /home/pi/code/musicbox/server.py
+WorkingDirectory=/home/pi/code/musicbox-mpd
+ExecStart=/home/pi/python-venv/bin/python /home/pi/code/musicbox-mpd/server.py
 
 [Install]
 WantedBy=multi-user.target
