@@ -280,10 +280,19 @@ async function doSearch() {
   }
 }
 
-function fmtMSS(s) {
+/*function fmtMSS(s) {
   const stringDate = new Date(s * 1000).toISOString();
   return s < 3600 ? stringDate.substring(14, 19) : stringDate.substring(11, 19);
-}
+}*/
+function fmtMSS(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor(seconds / 60) % 60;
+            const secs = Math.floor(seconds % 60);
+            if (hours > 0)
+                return `${hours}:${mins.toString().padStart(2,0)}:${secs.toString().padStart(2,0)}`;
+            
+            return `${mins}:${secs.toString().padStart(2,0)}`;
+        }
 
 async function removeFromQueue(id, row) {
   const result = await doAjax("DELETE", `${id}`);
