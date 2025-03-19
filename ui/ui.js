@@ -34,6 +34,7 @@ const doAjax = async (verb, endpoint, data = null) => {
   };
   if (data != null) options.body = JSON.stringify(data);
   const response = await fetch(`/${endpoint}`, options);
+
   if (response.ok) {
     return await response.json();
   } else {
@@ -230,6 +231,12 @@ async function doCommand(command) {
   } else if (command.startsWith(":rand ")) {
     var num = parseInt(command.substring(6));
     if (num > 0) await doAjax("POST", `rand/${num}`);
+  } else if (command === ":update") {
+    await doAjax("POST", "update");
+  } else if (command === ":settings") {
+    showSettings();
+  } else if (command === ":error") {
+    showError("This is an error message");
   }
   document.getElementById("search").value = "";
 }
@@ -280,19 +287,14 @@ async function doSearch() {
   }
 }
 
-/*function fmtMSS(s) {
-  const stringDate = new Date(s * 1000).toISOString();
-  return s < 3600 ? stringDate.substring(14, 19) : stringDate.substring(11, 19);
-}*/
 function fmtMSS(seconds) {
-            const hours = Math.floor(seconds / 3600);
-            const mins = Math.floor(seconds / 60) % 60;
-            const secs = Math.floor(seconds % 60);
-            if (hours > 0)
-                return `${hours}:${mins.toString().padStart(2,0)}:${secs.toString().padStart(2,0)}`;
-            
-            return `${mins}:${secs.toString().padStart(2,0)}`;
-        }
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor(seconds / 60) % 60;
+  const secs = Math.floor(seconds % 60);
+  if (hours > 0) return `${hours}:${mins.toString().padStart(2, 0)}:${secs.toString().padStart(2, 0)}`;
+
+  return `${mins}:${secs.toString().padStart(2, 0)}`;
+}
 
 async function removeFromQueue(id, row) {
   const result = await doAjax("DELETE", `${id}`);
@@ -381,11 +383,35 @@ function showStartScreen() {
             <h2>MusicBox</h2>
             <h3>Commands</h3>
             <p><strong><a href="#" onclick="popSearch(':clear')">:clear</a></strong>  - clear the current queue</p>
-            <p><strong><a href="#" onclick="popSearch(':mix')">:mix</a> - list all mixtapes</p>
+            <p><strong><a href="#" onclick="popSearch(':mix')">:mix</a></strong>  - list all mixtapes</p>
             <p><strong><a href="#" onclick="popSearch(':mix ')">:mix [name of mixtape]</a></strong> - save contents of current queue to a 'mixtape' (aka playlist)</p>
             <p><strong><a href="#" onclick="popSearch(':delmix ')">:delmix [name of mixtape]</a></strong> - delete a mixtape</p>
             <p><strong><a href="#" onclick="popSearch(':rand ')">:rand [x]</a></strong> - add 'x' number of random songs to the queue</p>
+            <p><strong><a href="#" onclick="popSearch(':update')">:update</a></strong> - re-scan music library</p>
           </div>
         </li>
   `;
+}
+
+async function showSettings() {
+  const doc = document.getElementById("content");
+  //const html = await doAjax("GET", "settingsui");
+  const response = await fetch(`/settingsui`);
+  let html;
+  if (response.ok) {
+    html = await response.text();
+  } else {
+    return "error";
+  }
+  doc.innerHTML = html;
+}
+
+function showError(message) {
+  const doc = document.getElementById("content");
+  doc.innerHTML = `<div class="error">
+    <h2>Error</h2>
+    <p>
+    ${message}
+    </p>
+  </div>`;
 }

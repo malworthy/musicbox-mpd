@@ -4,9 +4,9 @@ import json
 # import threading
 import data
 import os
-# import time
+import time
 # import subprocess
-from mpd import MPDClient
+# from mpd import MPDClient
 from musicplayer import MusicPlayer
 from urllib.parse import unquote
 
@@ -17,13 +17,19 @@ def query(sql, params):
     return [dict(row) for row in rows]
 
 
-def status_json(msg):
-    return """{"status": "_*_"}""".replace("_*_", msg)
+def status_json(status, message=""):
+    # return """{"status": "_*_"}""".replace("_*_", msg)
+    return f"""{"status": {status}, "message": "{message}"}"""
 
 
 @route('/ui')
 def ui():
     return static_file("ui.html", "./ui/")
+
+
+@route('/settingsui')
+def settingsui():
+    return static_file("settings.html", "./ui/")
 
 
 @route('/ui/<file>')
@@ -49,6 +55,13 @@ def coverart(id):
 @route('/search')
 def search():
     result = data.search(con, request.query.search)
+
+    # If no results and no search filters, try to cache the library and search again
+    if len(result) == 0 and request.query.search == "":
+        print("Library empty - Caching library and retrying search")
+        player.cache_library(con)
+        result = data.search(con, request.query.search)
+
     return json.dumps(result)
 
 
@@ -196,14 +209,35 @@ def load_mixtape(name):
 
 @post('/mix/<name>')
 def create_mixtape(name):
-    player.save_playlist(name)
-    return status_json("OK")
+    result = player.save_playlist(name)
+    if result:
+        return status_json("OK")
+    else:
+        return status_json("Error", player.error_message)
 
 
 @delete('/mix/<name>')
 def delete_mixtape(name):
     player.delete_playlist(name)
     return status_json("OK")
+
+
+@post('/update')
+def update():
+    result = player.update(con)
+    return json.dumps(result)
+
+
+def try_cache_library():
+    backoff = [5, 10, 30, 60, 120]
+    for i in range(5):
+        try:
+            player.cache_library(con)
+            return
+        except Exception as e:
+            print(f"Error caching library: {e}")
+            print(f"Retrying in {backoff[i]} seconds")
+            time.sleep(backoff[i])
 
 
 ##### ENTRY POINT #####
@@ -216,5 +250,6 @@ f.close()
 app = app()
 app.install(cors_plugin('*'))
 player = MusicPlayer(config["mpd_host"], config["mpd_port"])
-player.cache_library(con)
+
+try_cache_library()
 run(host=config["host"], port=config["port"])

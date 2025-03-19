@@ -2,8 +2,25 @@ import sqlite3
 
 
 def in_memory_db():
-    connection = sqlite3.connect(":memory:")
+    connection = sqlite3.connect(":memory:", check_same_thread=False)
     connection.row_factory = sqlite3.Row
+
+    create_sql = """
+        create table library
+        (
+            id INTEGER PRIMARY KEY, 
+            filename text, 
+            tracktitle text, 
+            artist text, 
+            album text, 
+            albumartist text, 
+            tracknumber int, 
+            length int, 
+            year text
+        )
+        """
+
+    connection.execute(create_sql)
 
     return connection
 

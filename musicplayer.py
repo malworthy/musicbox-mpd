@@ -1,4 +1,5 @@
 from mpd import MPDClient
+from threading import Thread
 import os
 
 
@@ -7,11 +8,16 @@ class MusicPlayer:
     def __init__(self, host="localhost", port=6600):
         self.host = host
         self.port = port
-        self.client = self.create_client()
+        self.client = None  # self.create_client()
 
     """ Check if the client is connected to the server, if not, connect """
 
     def connect(self):
+        if self.client == None:
+            self.client = self.create_client()
+            self.client.connect(self.host, self.port)
+            return
+
         try:
             self.client.ping()
         except Exception as e:
@@ -22,7 +28,7 @@ class MusicPlayer:
         client = MPDClient()
         client.timeout = 10
         client.idletimeout = None
-        client.connect("musicbox", 6600)
+        # client.connect("musicbox", 6600)
         return client
 
     def cache_library(self, con):
@@ -31,11 +37,7 @@ class MusicPlayer:
         songs = self.client.search("any", "")
         result = [(x.get("file"), x.get("title"), x.get("artist"), x.get("album"), x.get(
             "albumartist"), x.get("track"), x.get("time"), x.get("date")) for x in songs]
-        # client.disconnect()
-        try:
-            con.execute("create table library(id INTEGER PRIMARY KEY, filename text, tracktitle text, artist text, album text, albumartist text, tracknumber int, length int, year text)")
-        except:
-            print("Library table already exists")
+        con.execute("delete from library")
         con.executemany(
             "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)", result)
         print("Library cached")
@@ -110,7 +112,8 @@ class MusicPlayer:
             songid = s.get("songid")
             result = dict(volume=s.get("volume"), state=s.get("state"), songid=s.get(
                 "songid"), elapsed=s.get("elapsed"), duration=s.get("duration"), song=s.get("song"),
-                audio=s.get("audio"), updating=s.get("updating_db"), playlistlength=s.get("playlistlength"))
+                audio=s.get("audio"), updating_db=s.get("updating_db"), playlistlength=s.get("playlistlength"))
+
             if songid != None:
                 d = self.client.playlistid(songid)
 
@@ -151,6 +154,12 @@ class MusicPlayer:
     def get_cover_art(self, uri, img_folder):
         if img_folder == None:
             return None
+        try:
+            if os.path.exists(img_folder) == False:
+                os.makedirs(img_folder)
+        except Exception as e:
+            print(f"Error creating folder: {e}")
+            return None
 
         try:
             folder = os.path.dirname(uri)
@@ -185,6 +194,7 @@ class MusicPlayer:
             self.client.save(name)
         except Exception as e:
             print(f"Error saving playlist: {e}")
+            self.error_message = e.msg
             return False
         return True
 
@@ -224,3 +234,41 @@ class MusicPlayer:
             print(f"Error loading playlist: {e}")
             return False
         return True
+
+    def update(self, con):
+        try:
+            self.connect()
+            status = self.client.status()
+            updating = status.get("updating_db")
+            if updating != None:
+                return updating
+
+            result = self.client.update()
+            thread = Thread(target=self.wait_for_update, args=(con, ))
+            thread.start()
+        except Exception as e:
+            print(f"Error updating library: {e}")
+            return None
+        return result
+
+    def wait_for_update(self, con):
+        try:
+            local_client = self.create_client()
+            local_client.connect(self.host, self.port)
+            for i in range(2):
+                # self.connect()
+                print("Waiting for update")
+                local_client.idle("update")
+                print("update event happened")
+                status = local_client.status()
+                updating = status.get("updating_db")
+                print(f"Updating: {updating}")
+                if updating == None:
+                    self.cache_library(con)
+                    return True
+        except Exception as e:
+            print(f"Error waiting for update: {e}")
+            return False
+        finally:
+            local_client.close()
+        return False
