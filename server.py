@@ -18,8 +18,8 @@ def query(sql, params):
 
 
 def status_json(status, message=""):
-    # return """{"status": "_*_"}""".replace("_*_", msg)
-    return f"""{"status": {status}, "message": "{message}"}"""
+    return """{"status": "_*_"}""".replace("_*_", status)
+    # return f"""{"status": {status}, "message": "{message}"}"""
 
 
 @route('/ui')
