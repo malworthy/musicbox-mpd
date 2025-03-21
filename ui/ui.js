@@ -38,6 +38,7 @@ const doAjax = async (verb, endpoint, data = null) => {
   if (response.ok) {
     return await response.json();
   } else {
+    showError(response.statusText);
     return null;
   }
 };
@@ -112,7 +113,8 @@ async function pause() {
 async function play() {
   showingResults = false;
   const status = await doAjax("POST", "play");
-  updateStatus();
+  if (status.status === "Error") showError(status.message);
+  else updateStatus();
 }
 
 async function playAlbum(path) {
@@ -133,6 +135,8 @@ async function skip() {
 
 async function updateQueueStatus() {
   const status = await doAjax("GET", "queuestatus");
+  const playButton = document.getElementById("play");
+  playButton.disabled = status.queueCount == 0 && playStatus == "stop";
   if (playStatus == "stop") {
     document.getElementById("songName").innerHTML = "Queue";
     document.getElementById("artistName").innerHTML = `${status.queueCount} Songs (${fmtMSS(status.queueLength)})`;
@@ -219,8 +223,10 @@ function addButton(text, clickEvent) {
 }
 
 async function doCommand(command) {
-  if (command == ":clear") await doAjax("DELETE", "all");
-  else if (command === ":mix") {
+  if (command == ":clear") {
+    await doAjax("DELETE", "all");
+    updateStatus();
+  } else if (command === ":mix") {
     await getMixtapes();
   } else if (command.startsWith(":mix ")) {
     var name = command.substring(5);
@@ -237,6 +243,8 @@ async function doCommand(command) {
     showSettings();
   } else if (command === ":error") {
     showError("This is an error message");
+  } else if (command.startsWith(":shuffle")) {
+    await doAjax("POST", "shuffle");
   }
   document.getElementById("search").value = "";
 }
@@ -384,10 +392,12 @@ function showStartScreen() {
             <h3>Commands</h3>
             <p><strong><a href="#" onclick="popSearch(':clear')">:clear</a></strong>  - clear the current queue</p>
             <p><strong><a href="#" onclick="popSearch(':mix')">:mix</a></strong>  - list all mixtapes</p>
-            <p><strong><a href="#" onclick="popSearch(':mix ')">:mix [name of mixtape]</a></strong> - save contents of current queue to a 'mixtape' (aka playlist)</p>
-            <p><strong><a href="#" onclick="popSearch(':delmix ')">:delmix [name of mixtape]</a></strong> - delete a mixtape</p>
+            <p><strong><a href="#" onclick="popSearch(':mix ')">:mix [name]</a></strong> - save contents of current queue to a 'mixtape' (aka playlist)</p>
+            <p><strong><a href="#" onclick="popSearch(':delmix ')">:delmix [name]</a></strong> - delete a mixtape</p>
             <p><strong><a href="#" onclick="popSearch(':rand ')">:rand [x]</a></strong> - add 'x' number of random songs to the queue</p>
             <p><strong><a href="#" onclick="popSearch(':update')">:update</a></strong> - re-scan music library</p>
+            <p><strong><a href="#" onclick="popSearch(':settings')">:settings</a></strong> - MPD settings</p>
+            <p><strong><a href="#" onclick="popSearch(':shuffle')">:shuffle</a></strong> - shuffle queue</p>
           </div>
         </li>
   `;
@@ -395,15 +405,50 @@ function showStartScreen() {
 
 async function showSettings() {
   const doc = document.getElementById("content");
-  //const html = await doAjax("GET", "settingsui");
+
   const response = await fetch(`/settingsui`);
   let html;
   if (response.ok) {
     html = await response.text();
   } else {
-    return "error";
+    showError("Error loading settings static HTML page.  Maybe a network issue or server is not running?");
+    return;
   }
   doc.innerHTML = html;
+
+  const status = await doAjax("GET", "status");
+
+  document.getElementById("random").checked = status.random == 1;
+  document.getElementById("repeat").checked = status.repeat == 1;
+  document.getElementById("consume").checked = status.consume == 1;
+
+  const replaygain = await doAjax("GET", "replaygain");
+  if (replaygain.status === "OK") {
+    const val = replaygain.message;
+    document.getElementById("rg_off").checked = val == "off";
+    document.getElementById("rg_track").checked = val == "track";
+    document.getElementById("rg_album").checked = val == "album";
+    document.getElementById("rg_auto").checked = val == "auto";
+  } else if (replaygain.status === "Error") {
+    showError(replaygain.message);
+  }
+}
+
+async function setReplayGain() {
+  const mode = document.querySelector('input[name="replaygain"]:checked').value;
+  const response = await doAjax("POST", "replaygain", { mode: mode });
+  if (response.status === "Error") {
+    showError(response.message);
+  }
+}
+
+function changeSetting(setting) {
+  //document.getElementById(setting).checked = !document.getElementById(setting).checked;
+  const value = document.getElementById(setting).checked;
+  console.log("Changing setting", setting, value);
+  //console.log(setting, value);
+  const bitValue = value ? 1 : 0;
+  const result = doAjax("POST", `setting/${setting}/${bitValue}`);
 }
 
 function showError(message) {

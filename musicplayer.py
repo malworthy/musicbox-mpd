@@ -28,7 +28,6 @@ class MusicPlayer:
         client = MPDClient()
         client.timeout = 10
         client.idletimeout = None
-        # client.connect("musicbox", 6600)
         return client
 
     def cache_library(self, con):
@@ -48,6 +47,7 @@ class MusicPlayer:
             self.client.add(uri)
         except Exception as e:
             print(f"Error adding song to queue: {e}")
+            self.error_message = e.msg
             return False
         return True
 
@@ -57,6 +57,7 @@ class MusicPlayer:
             self.client.deleteid(id)
         except Exception as e:
             print(f"Error removing song from queue: {e}")
+            self.error_message = e.msg
             return False
         return True
 
@@ -66,6 +67,7 @@ class MusicPlayer:
             self.client.clear()
         except Exception as e:
             print(f"Error clearing queue: {e}")
+            self.error_message = e.msg
             return False
         return True
 
@@ -75,6 +77,7 @@ class MusicPlayer:
             queue = self.client.playlistinfo()
         except Exception as e:
             print(f"Error getting queue: {e}")
+            self.error_message = e.msg
             return []
         return queue
 
@@ -84,6 +87,7 @@ class MusicPlayer:
             self.client.clear()
         except Exception as e:
             print(f"Error clearing queue: {e}")
+            self.error_message = e.msg
             return False
         return True
 
@@ -93,6 +97,7 @@ class MusicPlayer:
             self.client.play(0)
         except Exception as e:
             print(f"Error playing song: {e}")
+            self.error_message = e.msg
             return False
         return True
 
@@ -110,10 +115,10 @@ class MusicPlayer:
             self.connect()
             s = self.client.status()
             songid = s.get("songid")
-            result = dict(volume=s.get("volume"), state=s.get("state"), songid=s.get(
-                "songid"), elapsed=s.get("elapsed"), duration=s.get("duration"), song=s.get("song"),
-                audio=s.get("audio"), updating_db=s.get("updating_db"), playlistlength=s.get("playlistlength"))
-
+            # result = dict(volume=s.get("volume"), state=s.get("state"), songid=s.get(
+            #     "songid"), elapsed=s.get("elapsed"), duration=s.get("duration"), song=s.get("song"),
+            #     audio=s.get("audio"), updating_db=s.get("updating_db"), playlistlength=s.get("playlistlength"))
+            result = s
             if songid != None:
                 d = self.client.playlistid(songid)
 
@@ -272,3 +277,45 @@ class MusicPlayer:
         finally:
             local_client.close()
         return False
+
+    def set_setting(self, name, value):
+        try:
+            self.connect()
+            if name == "random":
+                self.client.random(value)
+            elif name == "repeat":
+                self.client.repeat(value)
+            elif name == "consume":
+                self.client.consume(value)
+        except Exception as e:
+            print(f"Error setting value: {e}")
+            return False
+
+    def get_replay_gain_status(self):
+        try:
+            self.connect()
+            return self.client.replay_gain_status()
+        except Exception as e:
+            print(f"Error getting replay gain status: {e}")
+            self.error_message = e.msg
+            return None
+
+    def set_replay_gain_mode(self, mode):
+        try:
+            self.connect()
+            self.client.replay_gain_mode(mode)
+            return True
+        except Exception as e:
+            print(f"Error setting replay gain mode: {e}")
+            self.error_message = e.msg
+            return False
+
+    def shuffle(self):
+        try:
+            self.connect()
+            self.client.shuffle()
+            return True
+        except Exception as e:
+            print(f"Error in shuffle: {e}")
+            self.error_message = e.msg
+            return False

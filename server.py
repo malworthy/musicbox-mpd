@@ -1,12 +1,9 @@
 from bottle import route, post, run, request, app, static_file, delete
 from bottle_cors_plugin import cors_plugin
 import json
-# import threading
 import data
 import os
 import time
-# import subprocess
-# from mpd import MPDClient
 from musicplayer import MusicPlayer
 from urllib.parse import unquote
 
@@ -18,8 +15,7 @@ def query(sql, params):
 
 
 def status_json(status, message=""):
-    return """{"status": "_*_"}""".replace("_*_", status)
-    # return f"""{"status": {status}, "message": "{message}"}"""
+    return f"""{{"status": "{status}", "message": "{message}"}}"""
 
 
 @route('/ui')
@@ -119,7 +115,9 @@ def status():
 
 @post('/play')
 def play():
-    player.play()
+    status = player.play()
+    if status == False:
+        return status_json("Error", player.error_message)
     return status_json("OK")
 
 
@@ -164,7 +162,8 @@ def playsong(id):
     uri = data.get_uri(con, id)
     player.clear_queue()
     player.add_to_queue(uri)
-    player.play()
+    if not player.play():
+        return status_json("Error", player.error_message)
     return status_json("OK")
 
 # Use for scanning QR codes TODO: Implement
@@ -226,6 +225,37 @@ def delete_mixtape(name):
 def update():
     result = player.update(con)
     return json.dumps(result)
+
+
+@post('/setting/<name>/<value>')
+def setting(name, value):
+    player.set_setting(name, value)
+    return status_json("OK")
+
+
+@route('/replaygain')
+def replaygain():
+    result = player.get_replay_gain_status()
+    if result == None:
+        return status_json("Error", player.error_message)
+    return status_json("OK", result)
+
+
+@post('/replaygain')
+def set_replaygain():
+    value = request.json["mode"]
+    result = player.set_replay_gain_mode(value)
+    if result == False:
+        return status_json("Error", player.error_message)
+    return status_json("OK", result)
+
+
+@post('/shuffle')
+def shuffle():
+    result = player.shuffle()
+    if result == False:
+        return status_json("Error", player.error_message)
+    return status_json("OK", result)
 
 
 def try_cache_library():
