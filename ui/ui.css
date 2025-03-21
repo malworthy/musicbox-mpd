@@ -187,35 +187,10 @@ input {
 }
 
 input[type="radio"] {
-  vertical-align: top;
-}
-
-input[type="radio"]:after {
-  width: 15px;
-  height: 15px;
-  border-radius: 15px;
-  top: -2px;
-  left: -1px;
-  position: relative;
-  background-color: #d1d3d1;
-  content: "";
-  display: inline-block;
-  visibility: visible;
-  border: 2px solid white;
-}
-
-input[type="radio"]:checked:after {
-  width: 15px;
-  height: 15px;
-  border-radius: 15px;
-  top: -2px;
-  left: -1px;
-  position: relative;
-  background-color: green;
-  content: "";
-  display: inline-block;
-  visibility: visible;
-  border: 2px solid white;
+  vertical-align: bottom;
+  width: 1.5em;
+  height: 1.5rem;
+  accent-color: green;
 }
 
 .checkbox-wrapper-6 .tgl {
