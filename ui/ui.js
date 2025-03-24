@@ -296,6 +296,7 @@ async function doSearch() {
 }
 
 function fmtMSS(seconds) {
+  if (!seconds) return "";
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor(seconds / 60) % 60;
   const secs = Math.floor(seconds % 60);
@@ -324,8 +325,8 @@ async function getQueue() {
   for (const song of queue) {
     const listItem = document.createElement("li");
     const divText = document.createElement("div");
-    divText.innerHTML = `<h4>${i++}. ${song.title} ${fmtMSS(song.duration)}</h4>
-    <p>${song.artist} - ${song.album}</p>`;
+    divText.innerHTML = `<h4>${i++}. ${song.title ?? song.file} ${fmtMSS(song.duration)}</h4>
+    <p>${song.artist ?? ""} - ${song.album ?? ""}</p>`;
 
     const divButtons = document.createElement("div");
     divButtons.appendChild(addButton("Del", () => removeFromQueue(song.id, listItem)));

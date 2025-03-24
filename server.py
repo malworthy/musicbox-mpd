@@ -99,7 +99,7 @@ def queue():
 @route("/queuestatus")
 def queuestatus():
     result = player.get_queue()
-    return f"""{{ "queueCount" : {len(result)}, "queueLength" : {sum([float(x.get("duration")) for x in result])} }}"""
+    return f"""{{ "queueCount" : {len(result)}, "queueLength" : {sum([float(x.get("duration")) for x in result if x.get("duration") != None])} }}"""
 
 
 @route("/status")
@@ -270,6 +270,13 @@ def try_cache_library():
             time.sleep(backoff[i])
 
 
+def add_radio_stations():
+    stations = config.get("stations")
+    if stations == None:
+        return
+    data.add_radio_stations(con, stations)
+
+
 ##### ENTRY POINT #####
 con = data.in_memory_db()
 
@@ -282,4 +289,5 @@ app.install(cors_plugin('*'))
 player = MusicPlayer(config["mpd_host"], config["mpd_port"])
 
 try_cache_library()
+add_radio_stations()
 run(host=config["host"], port=config["port"])

@@ -83,6 +83,17 @@ def get_random_songs(con, number):
     return query(con, sql, ())
 
 
+def add_radio_stations(con, stations):
+    sql = "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)"
+    count = 1
+    for station in stations:
+        url = station.get("url")
+        name = station.get("name")
+        params = (url, name, "radio", "radio", "", count, 0, 0)
+        con.execute(sql, params)
+        count += 1
+
+
 def query(con, sql, params):
     res = con.execute(sql, params)
     rows = res.fetchall()
