@@ -1,11 +1,14 @@
 from bottle import route, post, run, request, app, static_file, delete
 from bottle_cors_plugin import cors_plugin
 import json
-import data
 import os
 import time
-from musicplayer import MusicPlayer
 from urllib.parse import unquote
+import pathlib
+import argparse
+
+from musicbox_mpd.musicplayer import MusicPlayer
+from musicbox_mpd import data
 
 
 def query(sql, params):
@@ -18,19 +21,23 @@ def status_json(status, message=""):
     return f"""{{"status": "{status}", "message": "{message}"}}"""
 
 
+def get_static_path():
+    return os.path.join(pathlib.Path(__file__).parent.resolve(), "ui")
+
+
 @route('/ui')
 def ui():
-    return static_file("ui.html", "./ui/")
+    return static_file("ui.html", get_static_path())
 
 
 @route('/settingsui')
 def settingsui():
-    return static_file("settings.html", "./ui/")
+    return static_file("settings.html", get_static_path())
 
 
 @route('/ui/<file>')
 def ui2(file):
-    return static_file(file, "./ui/")
+    return static_file(file, get_static_path())
 
 
 @route('/coverart/<id>')
@@ -277,10 +284,25 @@ def add_radio_stations():
     data.add_radio_stations(con, stations)
 
 
+def main():
+    try_cache_library()
+    add_radio_stations()
+    run(host=config["host"], port=config["port"])
+
+
 ##### ENTRY POINT #####
 con = data.in_memory_db()
 
-f = open("config.json")
+parser = argparse.ArgumentParser(
+    prog='Musicbox MPD',
+    description='A MPD Client')
+parser.add_argument('-c', '--configfile')
+args = parser.parse_args()
+config_file = args.configfile
+if config_file == None:
+    config_file = "/etc/musicbox.conf.json"
+
+f = open(config_file)
 config = json.load(f)
 f.close()
 
@@ -288,6 +310,9 @@ app = app()
 app.install(cors_plugin('*'))
 player = MusicPlayer(config["mpd_host"], config["mpd_port"])
 
-try_cache_library()
-add_radio_stations()
-run(host=config["host"], port=config["port"])
+# try_cache_library()
+# add_radio_stations()
+# run(host=config["host"], port=config["port"])
+
+if __name__ == "__main__":
+    main()
