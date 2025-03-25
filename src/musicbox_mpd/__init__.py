@@ -1,3 +1,3 @@
-# SPDX-FileCopyrightText: 2025-present U.N. Owen <void@some.where>
+# SPDX-FileCopyrightText: 2025-present M. Worthy
 #
 # SPDX-License-Identifier: MIT

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2025-present U.N. Owen <void@some.where>
+# SPDX-FileCopyrightText: 2025-present Malcolm Worthy
 #
 # SPDX-License-Identifier: MIT
-__version__ = "0.0.1"
+__version__ = "0.0.2"

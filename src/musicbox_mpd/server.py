@@ -2,6 +2,7 @@ from bottle import route, post, run, request, app, static_file, delete
 from bottle_cors_plugin import cors_plugin
 import json
 import os
+import sys
 import time
 from urllib.parse import unquote
 import pathlib
@@ -284,7 +285,61 @@ def add_radio_stations():
     data.add_radio_stations(con, stations)
 
 
+def get_config(from_arg):
+    default_config = """
+    {
+        "host" : "0.0.0.0",
+        "port" : 8080,
+        "mpd_host" : "localhost",
+        "mpd_port" : 6600,
+        "image_folder" : "/tmp/musicbox"
+    }
+    """
+    if from_arg == None:
+        # config_file = os.path.join(
+        #     pathlib.Path.home(), ".local/share/musicbox-mpd/musicbox-mpd.conf.json")
+        config_file = "/etc/musicbox-mpd.conf.json"
+    else:
+        config_file = from_arg
+
+    if pathlib.Path(config_file).is_file():
+        try:
+            f = open(config_file)
+            config = json.load(f)
+            f.close()
+            return config
+        except Exception as e:
+            print(f"Error loading config file: {e}")
+
+    print("No config file found, using defaults")
+    return json.loads(default_config)
+
+
+def create_service():
+    service_file = f"""
+[Unit]
+Description=MusicBox MPD Client
+After=multi-user.target
+
+[Service]
+Type=simple
+Restart=always
+User=pi
+WorkingDirectory={sys.argv[0]}
+ExecStart={sys.argv[0]}
+
+[Install]
+WantedBy=multi-user.target
+"""
+    with open("musicbox-mpd.service", "w") as f:
+        f.write(service_file)
+
+
 def main():
+    if args.service:
+        create_service()
+        return
+
     try_cache_library()
     add_radio_stations()
     run(host=config["host"], port=config["port"])
@@ -297,22 +352,13 @@ parser = argparse.ArgumentParser(
     prog='Musicbox MPD',
     description='A MPD Client')
 parser.add_argument('-c', '--configfile')
+parser.add_argument('-s', '--service', action='store_true')
 args = parser.parse_args()
-config_file = args.configfile
-if config_file == None:
-    config_file = "/etc/musicbox.conf.json"
-
-f = open(config_file)
-config = json.load(f)
-f.close()
+config = get_config(args.configfile)
 
 app = app()
 app.install(cors_plugin('*'))
 player = MusicPlayer(config["mpd_host"], config["mpd_port"])
-
-# try_cache_library()
-# add_radio_stations()
-# run(host=config["host"], port=config["port"])
 
 if __name__ == "__main__":
     main()
