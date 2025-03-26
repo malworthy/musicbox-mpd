@@ -339,6 +339,13 @@ WantedBy=multi-user.target
     with open("musicbox-mpd.service", "w") as f:
         f.write(service_file)
 
+    print("File 'musicbox-mpd.service' created ")
+    print("To install musicbox-mpd as a service, run the following commands:")
+    print(" sudo mv musicbox-mpd.service /etc/systemd/system/")
+    print(" sudo systemctl daemon-reload")
+    print(" sudo systemctl enable musicbox-mpd")
+    print(" sudo systemctl start musicbox-mpd")
+
 
 def main():
     if args.service:

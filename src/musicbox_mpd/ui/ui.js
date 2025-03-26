@@ -223,7 +223,8 @@ function addButton(text, clickEvent) {
 }
 
 async function doCommand(command) {
-  if (command == ":clear") {
+  if (command.startsWith(":c")) {
+    //:clear
     await doAjax("DELETE", "all");
     updateStatus();
   } else if (command === ":mix") {
@@ -237,14 +238,20 @@ async function doCommand(command) {
   } else if (command.startsWith(":rand ")) {
     var num = parseInt(command.substring(6));
     if (num > 0) await doAjax("POST", `rand/${num}`);
-  } else if (command === ":update") {
+  } else if (command.startsWith(":u")) {
+    //:update
     await doAjax("POST", "update");
-  } else if (command === ":settings") {
+  } else if (command.startsWith(":se")) {
+    //:settings
     showSettings();
-  } else if (command === ":error") {
+  } else if (command.startsWith(":e")) {
+    //:error
     checkError();
-  } else if (command.startsWith(":shuffle")) {
+  } else if (command.startsWith(":sh")) {
+    //:shuffle
     await doAjax("POST", "shuffle");
+  } else {
+    return;
   }
   document.getElementById("search").value = "";
 }
