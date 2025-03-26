@@ -29,6 +29,8 @@ def get_uri(con, id):
     curs = con.execute(
         "select filename from library where id = ?", (id,))
     result = curs.fetchone()
+    if result == None:
+        return None
     return result[0]
 
 
@@ -36,6 +38,8 @@ def get_id(con, uri):
     curs = con.execute(
         "select id from library where filename = ?", (uri,))
     result = curs.fetchone()
+    if result == None:
+        return 0
     return result[0]
 
 
@@ -89,7 +93,7 @@ def add_radio_stations(con, stations):
     for station in stations:
         url = station.get("url")
         name = station.get("name")
-        params = (url, name, "radio", "radio", "", count, 0, 0)
+        params = (url, name, url, name, "Radio", count, 0, 0)
         con.execute(sql, params)
         count += 1
 

@@ -242,7 +242,7 @@ async function doCommand(command) {
   } else if (command === ":settings") {
     showSettings();
   } else if (command === ":error") {
-    showError("This is an error message");
+    checkError();
   } else if (command.startsWith(":shuffle")) {
     await doAjax("POST", "shuffle");
   }
@@ -357,7 +357,7 @@ async function volume(amount) {
 function showCoverArt(id) {
   const doc = document.getElementById("content");
   doc.innerHTML = `
-  <img class="center" width=300 height=300 src="coverart/${id}" />
+  <img class="center" style="object-fit: contain" width=300 height=300 src="coverart/${id}" />
   <div class="center">
     <ul class="controls">
       <li style="background-color: black;">
@@ -450,6 +450,13 @@ function changeSetting(setting) {
   //console.log(setting, value);
   const bitValue = value ? 1 : 0;
   const result = doAjax("POST", `setting/${setting}/${bitValue}`);
+}
+
+async function checkError() {
+  const status = await doAjax("GET", "status");
+  if (status.error) {
+    showError(status.error);
+  }
 }
 
 function showError(message) {

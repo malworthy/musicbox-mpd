@@ -44,11 +44,16 @@ def ui2(file):
 @route('/coverart/<id>')
 def coverart(id):
     uri = data.get_uri(con, id)
+
+    if uri == None:
+        return static_file("default.gif", get_static_path())
+
     image_folder = config.get("image_folder")
 
     cover = player.get_cover_art(uri, image_folder)
     if cover == None:
-        cover = config.get("default_image")
+        return static_file("default.gif", get_static_path())
+        # cover = config.get("default_image")
 
     if not cover == None:
         path = os.path.dirname(cover)
