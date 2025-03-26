@@ -330,7 +330,7 @@ After=multi-user.target
 Type=simple
 Restart=always
 User=pi
-WorkingDirectory={sys.argv[0]}
+WorkingDirectory={pathlib.Path(sys.argv[0]).parent.resolve()}
 ExecStart={sys.argv[0]}
 
 [Install]
