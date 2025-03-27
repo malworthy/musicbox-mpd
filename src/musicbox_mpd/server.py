@@ -10,6 +10,7 @@ import argparse
 
 from musicbox_mpd.musicplayer import MusicPlayer
 from musicbox_mpd import data
+from musicbox_mpd import __about__
 
 
 def query(sql, params):
@@ -39,6 +40,12 @@ def settingsui():
 @route('/ui/<file>')
 def ui2(file):
     return static_file(file, get_static_path())
+
+
+@route('/version')
+def get_version():
+    # return status_json("OK", __about__.__version__)
+    return f"""{{"musicbox": "{__about__.__version__}", "mpd": "{player.get_mpd_version()}"}}"""
 
 
 @route('/coverart/<id>')
@@ -290,7 +297,7 @@ def add_radio_stations():
     data.add_radio_stations(con, stations)
 
 
-def get_config(from_arg):
+def get_default_config(create=False):
     default_config = """
     {
         "host" : "0.0.0.0",
@@ -300,9 +307,16 @@ def get_config(from_arg):
         "image_folder" : "/tmp/musicbox"
     }
     """
+    if create:
+        with open("musicbox-mpd.conf.json", "w") as f:
+            f.write(default_config)
+
+    return default_config
+
+
+def get_config(from_arg):
+    default_config = get_default_config()
     if from_arg == None:
-        # config_file = os.path.join(
-        #     pathlib.Path.home(), ".local/share/musicbox-mpd/musicbox-mpd.conf.json")
         config_file = "/etc/musicbox-mpd.conf.json"
     else:
         config_file = from_arg
@@ -329,7 +343,6 @@ After=multi-user.target
 [Service]
 Type=simple
 Restart=always
-User=pi
 WorkingDirectory={pathlib.Path(sys.argv[0]).parent.resolve()}
 ExecStart={sys.argv[0]}
 
@@ -348,9 +361,30 @@ WantedBy=multi-user.target
 
 
 def main():
+    global app
+    global config
+    global player
+    global con
+
     if args.service:
         create_service()
         return
+
+    if args.version:
+        print(f"Musicbox MPD version {__about__.__version__}")
+        return
+
+    if args.create_config:
+        get_default_config(True)
+        print("Config file 'musicbox-mpd.conf.json' created")
+        return
+
+    config = get_config(args.configfile)
+
+    con = data.in_memory_db()
+    app = app()
+    app.install(cors_plugin('*'))
+    player = MusicPlayer(config["mpd_host"], config["mpd_port"])
 
     try_cache_library()
     add_radio_stations()
@@ -358,19 +392,17 @@ def main():
 
 
 ##### ENTRY POINT #####
-con = data.in_memory_db()
-
 parser = argparse.ArgumentParser(
     prog='Musicbox MPD',
     description='A MPD Client')
+parser.add_argument('-v', '--version', action='store_true')
 parser.add_argument('-c', '--configfile')
-parser.add_argument('-s', '--service', action='store_true')
-args = parser.parse_args()
-config = get_config(args.configfile)
+parser.add_argument('-s', '--service', action='store_true',
+                    help="create systemd service file in current directory")
 
-app = app()
-app.install(cors_plugin('*'))
-player = MusicPlayer(config["mpd_host"], config["mpd_port"])
+parser.add_argument('--create-config', action='store_true',
+                    help="create default config file in current directory")
+args = parser.parse_args()
 
 if __name__ == "__main__":
     main()

@@ -41,6 +41,15 @@ class MusicPlayer:
             "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)", result)
         print("Library cached")
 
+    def get_mpd_version(self):
+        try:
+            self.connect()
+            return self.client.mpd_version
+        except Exception as e:
+            print(f"Error getting MPD version: {e}")
+            self.error_message = e.msg
+            return "Error getting MPD version"
+
     def add_to_queue(self, uri):
         try:
             self.connect()

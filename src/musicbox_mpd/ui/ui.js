@@ -250,6 +250,9 @@ async function doCommand(command) {
   } else if (command.startsWith(":sh")) {
     //:shuffle
     await doAjax("POST", "shuffle");
+  } else if (command.startsWith(":a")) {
+    ver = await doAjax("GET", "version");
+    showInfo(`<p>Musicbox Version: ${ver.musicbox}</p> <p>MPD Version: ${ver.mpd}</p>`);
   } else {
     return;
   }
@@ -470,6 +473,16 @@ function showError(message) {
   const doc = document.getElementById("content");
   doc.innerHTML = `<div class="error">
     <h2>Error</h2>
+    <p>
+    ${message}
+    </p>
+  </div>`;
+}
+
+function showInfo(message) {
+  const doc = document.getElementById("content");
+  doc.innerHTML = `<div class="info">
+    <h2>About Musicbox</h2>
     <p>
     ${message}
     </p>

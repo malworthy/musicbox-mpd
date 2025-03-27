@@ -180,6 +180,12 @@ input {
   padding: 5px;
 }
 
+.info {
+  color: green;
+  background-color: #2a2424;
+  padding: 5px;
+}
+
 .settings {
   color: black;
   background-color: gray;
