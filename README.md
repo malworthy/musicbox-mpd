@@ -25,7 +25,7 @@ This is still a work in progress and it not ready for use yet.
 Pre-installation
 Make sure you have installed and correctly configured MPD
 
-The best way to install musicbox-mpd is va pipx.  The instuctions below outline how to install and configure on a Debian basic linux distribution.  It's best to run musicbox-mpd on the same machine as your MPD server.
+The best way to install musicbox-mpd is va pipx.  The instuctions below outline how to install and configure on a Debian based linux distribution.  It's best to run musicbox-mpd on the same machine as your MPD server.
 
 1. Install pipx (if not already install)
 ```
@@ -58,7 +58,7 @@ For windows you will need to specify the name of the config file, as by default 
 Example of installing as a service on a rasperry pi.
 
 1. Create the service file
-   `musicbox-mpd --service`
+   ```musicbox-mpd --service```
 
 2. Move service file to systemd folder 
    sudo mv musicbox-mpd.service /etc/systemd/system/musicbox-mpd.service
