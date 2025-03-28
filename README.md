@@ -58,23 +58,30 @@ For windows you will need to specify the name of the config file, as by default 
 Example of installing as a service on a rasperry pi.
 
 1. Create the service file
-   ```musicbox-mpd --service```
+   ```
+   musicbox-mpd --service
+   ```
 
 2. Move service file to systemd folder 
+```
    sudo mv musicbox-mpd.service /etc/systemd/system/musicbox-mpd.service
-
+```
 3. Reload the daemon
+```
    sudo systemctl daemon-reload
-
+```
 4. Make sure service gets restarted on reboot
+```
    sudo systemctl enable musicbox-mpd
-
+```
 5. Start the service
+```
    sudo systemctl start musicbox-mpd
-
+```
 6. Check that it worked
-   sudo systemctl status musicbox-mpd
-
+```
+sudo systemctl status musicbox-mpd
+```
 ## Configuration
 
 TBA
