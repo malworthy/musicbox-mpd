@@ -49,7 +49,7 @@ TBA
 
 You can now open a browser on any machine in your local network and enter the following address: http://[name of your MPD server]:8080/ui
 
-Other OS's - Windows/MacOS
+### Other OS's - Windows/MacOS
 Musicbox is just a simple python script, so will work on any OS that supports python.  I designed musicbox to run on a raspberrypi, so the installation process on windows is not as user friendly.
 For windows you will need to specify the name of the config file, as by default it looks in /etc which will not exist. Also running as a service in windows is beyond the scope of this document.
 
@@ -58,7 +58,7 @@ For windows you will need to specify the name of the config file, as by default 
 Example of installing as a service on a rasperry pi.
 
 1. Create the service file
-   musicbox-mpd --service
+   `musicbox-mpd --service`
 
 2. Move service file to systemd folder 
    sudo mv musicbox-mpd.service /etc/systemd/system/musicbox-mpd.service
