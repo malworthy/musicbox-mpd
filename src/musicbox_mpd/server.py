@@ -29,7 +29,10 @@ def get_static_path():
 
 @route('/ui')
 def ui():
-    return static_file("ui.html", get_static_path())
+    # ui.html is not a static file, as using version number to bust cache of javascript file.
+    with open(os.path.join(get_static_path(), "ui.html")) as f:
+        html = f.read()
+        return html.replace("{ver}", __about__.__version__)
 
 
 @route('/settingsui')
