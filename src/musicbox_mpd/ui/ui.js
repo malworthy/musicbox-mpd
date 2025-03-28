@@ -322,6 +322,7 @@ async function removeFromQueue(id, row) {
 }
 
 async function playOneSong(id) {
+  showingResults = false;
   await doAjax("POST", `playsong/${id}`);
   updateStatus();
 }
@@ -367,7 +368,7 @@ async function volume(amount) {
 function showCoverArt(id) {
   const doc = document.getElementById("content");
   doc.innerHTML = `
-  <img class="center" style="object-fit: contain" width=300 height=300 src="coverart/${id}" />
+  <img id = "coverart" class="center" style="object-fit: contain" width=300 height=300 src="coverart/${id}" />
   <div class="center">
     <ul class="controls">
       <li style="background-color: black;">
@@ -386,6 +387,7 @@ function showCoverArt(id) {
   </div>
   <div class="center" id="vol"></div>
   `;
+  document.getElementById("coverart")?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 }
 
 function popSearch(command) {
