@@ -70,6 +70,23 @@ function updatePlayTime() {
   playTime.innerHTML = `${fmtMSS(elapsed)}/${fmtMSS(duration)}`;
 }
 
+var forceRedraw = function (element) {
+  if (!element) {
+    return;
+  }
+
+  var n = document.createTextNode(" ");
+  var disp = element.style.display; // don't worry about previous display style
+
+  element.appendChild(n);
+  element.style.display = "none";
+
+  setTimeout(function () {
+    element.style.display = disp;
+    n.parentNode.removeChild(n);
+  }, 20); // you can play with this timeout to make it as short as possible
+};
+
 async function updateStatus(updateContent = true) {
   const songName = document.getElementById("songName");
   const artistName = document.getElementById("artistName");
@@ -88,6 +105,7 @@ async function updateStatus(updateContent = true) {
     artistName.innerHTML = songDetails.artist;
     playBtn.innerHTML = "Stop";
     playBtn.onclick = () => stopPlay();
+    forceRedraw(playBtn); // Fix IOS bug where it refuses to update text on the button
     if (updateContent && !showingResults) showCoverArt(songDetails.libraryid);
     playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
   } else {
@@ -130,8 +148,7 @@ async function playOneSong(id) {
   showingResults = false;
   const status = await doAjax("POST", `playsong/${id}`);
   if (status.status === "Error") showError(status.message);
-  //updateStatus();
-  setTimeout(updateStatus);
+  updateStatus();
 }
 
 async function queueAlbum(path) {
