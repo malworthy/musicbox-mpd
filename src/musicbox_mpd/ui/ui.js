@@ -59,6 +59,8 @@ function updatePlayTime() {
     playTime.innerHTML = "";
     return;
   } else if (playStatus === "play") {
+    //const playBtn = document.getElementById("play");
+    //playBtn.innerHTML = "Stop";
     elapsed++;
     if (elapsed > duration) {
       updateStatus();
@@ -120,7 +122,16 @@ async function play() {
 async function playAlbum(path) {
   showingResults = false;
   const status = await doAjax("POST", "playalbum", { path: path });
+  if (status.status === "Error") showError(status.message);
   updateStatus();
+}
+
+async function playOneSong(id) {
+  showingResults = false;
+  const status = await doAjax("POST", `playsong/${id}`);
+  if (status.status === "Error") showError(status.message);
+  //updateStatus();
+  setTimeout(updateStatus);
 }
 
 async function queueAlbum(path) {
@@ -319,12 +330,6 @@ async function removeFromQueue(id, row) {
   const result = await doAjax("DELETE", `${id}`);
   await updateQueueStatus();
   row.parentNode.removeChild(row);
-}
-
-async function playOneSong(id) {
-  showingResults = false;
-  await doAjax("POST", `playsong/${id}`);
-  updateStatus();
 }
 
 async function getQueue() {
