@@ -1,11 +1,16 @@
 from bottle import route, post, run, request, app, static_file, delete
 from bottle_cors_plugin import cors_plugin
 import json
-import data
 import os
+import sys
 import time
-from musicplayer import MusicPlayer
 from urllib.parse import unquote
+import pathlib
+import argparse
+
+from musicbox_mpd.musicplayer import MusicPlayer
+from musicbox_mpd import data
+from musicbox_mpd import __about__
 
 
 def query(sql, params):
@@ -18,29 +23,47 @@ def status_json(status, message=""):
     return f"""{{"status": "{status}", "message": "{message}"}}"""
 
 
+def get_static_path():
+    return os.path.join(pathlib.Path(__file__).parent.resolve(), "ui")
+
+
 @route('/ui')
 def ui():
-    return static_file("ui.html", "./ui/")
+    # ui.html is not a static file, as using version number to bust cache of javascript file.
+    with open(os.path.join(get_static_path(), "ui.html")) as f:
+        html = f.read()
+        return html.replace("{ver}", __about__.__version__)
 
 
 @route('/settingsui')
 def settingsui():
-    return static_file("settings.html", "./ui/")
+    return static_file("settings.html", get_static_path())
 
 
 @route('/ui/<file>')
 def ui2(file):
-    return static_file(file, "./ui/")
+    return static_file(file, get_static_path())
+
+
+@route('/version')
+def get_version():
+    # return status_json("OK", __about__.__version__)
+    return f"""{{"musicbox": "{__about__.__version__}", "mpd": "{player.get_mpd_version()}"}}"""
 
 
 @route('/coverart/<id>')
 def coverart(id):
     uri = data.get_uri(con, id)
+
+    if uri == None:
+        return static_file("default.gif", get_static_path())
+
     image_folder = config.get("image_folder")
 
     cover = player.get_cover_art(uri, image_folder)
     if cover == None:
-        cover = config.get("default_image")
+        return static_file("default.gif", get_static_path())
+        # cover = config.get("default_image")
 
     if not cover == None:
         path = os.path.dirname(cover)
@@ -277,17 +300,112 @@ def add_radio_stations():
     data.add_radio_stations(con, stations)
 
 
+def get_default_config(create=False):
+    default_config = """
+    {
+        "host" : "0.0.0.0",
+        "port" : 8080,
+        "mpd_host" : "localhost",
+        "mpd_port" : 6600,
+        "image_folder" : "/tmp/musicbox"
+    }
+    """
+    if create:
+        with open("musicbox-mpd.conf.json", "w") as f:
+            f.write(default_config)
+
+    return default_config
+
+
+def get_config(from_arg):
+    default_config = get_default_config()
+    if from_arg == None:
+        config_file = "/etc/musicbox-mpd.conf.json"
+    else:
+        config_file = from_arg
+
+    if pathlib.Path(config_file).is_file():
+        try:
+            f = open(config_file)
+            config = json.load(f)
+            f.close()
+            return config
+        except Exception as e:
+            print(f"Error loading config file: {e}")
+
+    print("No config file found, using defaults")
+    return json.loads(default_config)
+
+
+def create_service():
+    service_file = f"""
+[Unit]
+Description=MusicBox MPD Client
+After=multi-user.target
+
+[Service]
+Type=simple
+Restart=always
+WorkingDirectory={pathlib.Path(sys.argv[0]).parent.resolve()}
+ExecStart={sys.argv[0]}
+
+[Install]
+WantedBy=multi-user.target
+"""
+    with open("musicbox-mpd.service", "w") as f:
+        f.write(service_file)
+
+    print("File 'musicbox-mpd.service' created ")
+    print("To install musicbox-mpd as a service, run the following commands:")
+    print(" sudo mv musicbox-mpd.service /etc/systemd/system/")
+    print(" sudo systemctl daemon-reload")
+    print(" sudo systemctl enable musicbox-mpd")
+    print(" sudo systemctl start musicbox-mpd")
+
+
+def main():
+    global app
+    global config
+    global player
+    global con
+
+    if args.service:
+        create_service()
+        return
+
+    if args.version:
+        print(f"Musicbox MPD version {__about__.__version__}")
+        return
+
+    if args.create_config:
+        get_default_config(True)
+        print("Config file 'musicbox-mpd.conf.json' created")
+        return
+
+    config = get_config(args.configfile)
+
+    con = data.in_memory_db()
+    app = app()
+    app.install(cors_plugin('*'))
+    player = MusicPlayer(config["mpd_host"], config["mpd_port"])
+
+    try_cache_library()
+    add_radio_stations()
+    run(host=config["host"], port=config["port"])
+
+
 ##### ENTRY POINT #####
-con = data.in_memory_db()
+parser = argparse.ArgumentParser(
+    prog='Musicbox MPD',
+    description='A MPD Client')
+parser.add_argument('-v', '--version', action='store_true')
+parser.add_argument('-c', '--configfile')
+parser.add_argument('-s', '--service', action='store_true',
+                    help="create systemd service file in current directory")
 
-f = open("config.json")
-config = json.load(f)
-f.close()
+parser.add_argument('--create-config', action='store_true',
+                    help="create default config file in current directory")
+args = parser.parse_args()
 
-app = app()
-app.install(cors_plugin('*'))
-player = MusicPlayer(config["mpd_host"], config["mpd_port"])
-
-try_cache_library()
-add_radio_stations()
-run(host=config["host"], port=config["port"])
+if __name__ == "__main__":
+    main()

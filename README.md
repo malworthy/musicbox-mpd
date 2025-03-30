@@ -4,8 +4,6 @@ A lightweight web based MPD client.
 
 Written in python and vanilla.js.
 
-This is still a work in progress and it not ready for use yet.
-
 ## Features
 
 - Mobile friendly interface
@@ -22,21 +20,90 @@ This is still a work in progress and it not ready for use yet.
 
 ## installing/running
 
-Install the following python dependencies:
+Pre-installation
+Make sure you have installed and correctly configured MPD
+
+The best way to install musicbox-mpd is va pipx. The instuctions below outline how to install and configure on a Debian based linux distribution. It's best to run musicbox-mpd on the same machine as your MPD server.
+
+1. Install pipx (if not already installed)
+
+   ```
+   sudo apt install pipx
+   ```
+
+2. Install musicbox-mpd
+
+   ```
+   pipx install musicbox-mpd
+   ```
+
+3. Check that is works
+   ```
+   musicbox-mpd
+   ```
+
+If you all OK you should see output similar to this:
 
 ```
-pip install bottle
-pip install bottle-cors-plugin
-pip install python-mpd2
+0.23.5
+Library cached
+Bottle v0.12.25 server starting up (using WSGIRefServer())...
+Listening on http://localhost:8080/
+Hit Ctrl-C to quit.
 ```
 
-Clone the repository:
+You can now open a browser on any machine in your local network and enter the following address: http://[name of your MPD server]:8080/ui
 
-```
-git clone https://github.com/malworthy/musicbox-mpd.git
-```
+### Other OS's - Windows/MacOS
 
-Create a config.json file:
+Musicbox is just a simple python script, so will work on any OS that supports python. I designed musicbox to run on a raspberrypi, so the installation process on windows is not as user friendly.
+For windows you will need to specify the name of the config file, as by default it looks in /etc which will not exist. Also running as a service in windows is beyond the scope of this document.
+
+## Install as a service
+
+Example of installing as a service on a raspberry pi.
+
+1. Create the service file
+
+   ```
+   musicbox-mpd --service
+   ```
+
+2. Move service file to systemd folder
+   ```
+   sudo mv musicbox-mpd.service /etc/systemd/system/musicbox-mpd.service
+   ```
+3. Reload the daemon
+   ```
+   sudo systemctl daemon-reload
+   ```
+4. Make sure service gets restarted on reboot
+   ```
+   sudo systemctl enable musicbox-mpd
+   ```
+5. Start the service
+   ```
+   sudo systemctl start musicbox-mpd
+   ```
+6. Check that it worked
+   ```
+   sudo systemctl status musicbox-mpd
+   ```
+
+## Configuration
+
+By default musicbox looks for the configuration file at /etc/musicbox-mpd.conf.json. This can be over-written by a command line option.
+
+"host" - Ip address musicbox will listen to connections on
+"port" - the port musicbox will listen to connections on
+"mpd_host" - url of MPD server
+"mpd_port" - port of MPD server
+"image_folder" - this is the folder musicbox will use to cache album art
+"stations" - a list of internet radio stations
+
+## Adding internet radio
+
+Example configuration file containing internet radio stations:
 
 ```
 {
@@ -45,60 +112,29 @@ Create a config.json file:
     "mpd_host" : "localhost",
     "mpd_port" : 6600,
     "image_folder" : "/tmp/musicbox",
-    "default_image" : "/tmp/musicbox/default.gif",
     "stations" : [
         {"name":"3RRR Melbourne", "url":"https://ondemand.rrr.org.au/stream/ws-hq.m3u"},
         {"name": "PBS 106.7FM", "url" : "https://playerservices.streamtheworld.com/api/livestream-redirect/3PBS_FMAAC128.m3u8"}
     ]
 }
 ```
-- Change "host" to "0.0.0.0" to allow remote connections to the server.
-- Change "port" if need the server to run on a different port.
-- "stations" : list of streaming radio stations (name, url)
 
-```
-python server.py
-```
+# Command line options
 
-Browse to UI:
-http://localhost:8080/ui
+-h, --help  
+ show help message and exit
 
-NOTE: replace 'localhost' with the address of server you are running off.
+-v, --version  
+ display the version number of musicbox
 
-## Install as a service
+-c CONFIGFILE, --configfile CONFIGFILE  
+allows you to specify the name of the config file used. Otherwise will default to /etc/musicbox-mpd.conf.json
 
-Example of installing as a service on a rasperry pi.
+-s, --service  
+create a systemd service file in current directory
 
-1. Create the following file
-   sudo nano /etc/systemd/system/musicbox.service
-
-```
-[Unit]
-Description=MusicBox MPD Client
-After=multi-user.target
-
-[Service]
-Type=simple
-Restart=always
-User=pi
-WorkingDirectory=/home/pi/code/musicbox-mpd
-ExecStart=/home/pi/python-venv/bin/python /home/pi/code/musicbox-mpd/server.py
-
-[Install]
-WantedBy=multi-user.target
-```
-
-2. Reload the daemon
-   sudo systemctl daemon-reload
-
-3. Make sure service gets restarted on reboot
-   sudo systemctl enable musicbox
-
-4. Start the service
-   sudo systemctl start musicbox
-
-5. Check that it worked
-   sudo systemctl status musicbox
+--create-config  
+create a default config file in current directory
 
 # User Guide
 
@@ -108,3 +144,8 @@ Commands
 - :mix [name of mixtape] - save contents of current queue to a 'mixtape' (aka playlist)
 - :delmix [name of mixtape] - delete a mixtape
 - :rand [x] - add 'x' number of random songs to the queue
+- :update - recan music library
+- :settings - show MPD settings
+- :shuffle - shuffle songs in the current queue
+- :error - show the last error message (if any) from the MPD server
+- :about - display version of musicbox and MPD server

@@ -59,6 +59,8 @@ function updatePlayTime() {
     playTime.innerHTML = "";
     return;
   } else if (playStatus === "play") {
+    //const playBtn = document.getElementById("play");
+    //playBtn.innerHTML = "Stop";
     elapsed++;
     if (elapsed > duration) {
       updateStatus();
@@ -67,6 +69,23 @@ function updatePlayTime() {
 
   playTime.innerHTML = `${fmtMSS(elapsed)}/${fmtMSS(duration)}`;
 }
+
+var forceRedraw = function (element) {
+  if (!element) {
+    return;
+  }
+
+  var n = document.createTextNode(" ");
+  var disp = element.style.display; // don't worry about previous display style
+
+  element.appendChild(n);
+  element.style.display = "none";
+
+  setTimeout(function () {
+    element.style.display = disp;
+    n.parentNode.removeChild(n);
+  }, 20); // you can play with this timeout to make it as short as possible
+};
 
 async function updateStatus(updateContent = true) {
   const songName = document.getElementById("songName");
@@ -86,6 +105,7 @@ async function updateStatus(updateContent = true) {
     artistName.innerHTML = songDetails.artist;
     playBtn.innerHTML = "Stop";
     playBtn.onclick = () => stopPlay();
+    forceRedraw(playBtn); // Fix IOS bug where it refuses to update text on the button
     if (updateContent && !showingResults) showCoverArt(songDetails.libraryid);
     playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
   } else {
@@ -120,6 +140,14 @@ async function play() {
 async function playAlbum(path) {
   showingResults = false;
   const status = await doAjax("POST", "playalbum", { path: path });
+  if (status.status === "Error") showError(status.message);
+  updateStatus();
+}
+
+async function playOneSong(id) {
+  showingResults = false;
+  const status = await doAjax("POST", `playsong/${id}`);
+  if (status.status === "Error") showError(status.message);
   updateStatus();
 }
 
@@ -223,7 +251,8 @@ function addButton(text, clickEvent) {
 }
 
 async function doCommand(command) {
-  if (command == ":clear") {
+  if (command.startsWith(":c")) {
+    //:clear
     await doAjax("DELETE", "all");
     updateStatus();
   } else if (command === ":mix") {
@@ -237,14 +266,23 @@ async function doCommand(command) {
   } else if (command.startsWith(":rand ")) {
     var num = parseInt(command.substring(6));
     if (num > 0) await doAjax("POST", `rand/${num}`);
-  } else if (command === ":update") {
+  } else if (command.startsWith(":u")) {
+    //:update
     await doAjax("POST", "update");
-  } else if (command === ":settings") {
+  } else if (command.startsWith(":se")) {
+    //:settings
     showSettings();
-  } else if (command === ":error") {
-    showError("This is an error message");
-  } else if (command.startsWith(":shuffle")) {
+  } else if (command.startsWith(":e")) {
+    //:error
+    checkError();
+  } else if (command.startsWith(":sh")) {
+    //:shuffle
     await doAjax("POST", "shuffle");
+  } else if (command.startsWith(":a")) {
+    ver = await doAjax("GET", "version");
+    showInfo(`<p>Musicbox Version: ${ver.musicbox}</p> <p>MPD Version: ${ver.mpd}</p>`);
+  } else {
+    return;
   }
   document.getElementById("search").value = "";
 }
@@ -311,11 +349,6 @@ async function removeFromQueue(id, row) {
   row.parentNode.removeChild(row);
 }
 
-async function playOneSong(id) {
-  await doAjax("POST", `playsong/${id}`);
-  updateStatus();
-}
-
 async function getQueue() {
   showingResults = true;
   const queue = await doAjax("GET", "queue");
@@ -357,7 +390,7 @@ async function volume(amount) {
 function showCoverArt(id) {
   const doc = document.getElementById("content");
   doc.innerHTML = `
-  <img class="center" width=300 height=300 src="coverart/${id}" />
+  <img id = "coverart" class="center" style="object-fit: contain" width=300 height=300 src="coverart/${id}" />
   <div class="center">
     <ul class="controls">
       <li style="background-color: black;">
@@ -376,6 +409,7 @@ function showCoverArt(id) {
   </div>
   <div class="center" id="vol"></div>
   `;
+  document.getElementById("coverart")?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 }
 
 function popSearch(command) {
@@ -452,10 +486,27 @@ function changeSetting(setting) {
   const result = doAjax("POST", `setting/${setting}/${bitValue}`);
 }
 
+async function checkError() {
+  const status = await doAjax("GET", "status");
+  if (status.error) {
+    showError(status.error);
+  }
+}
+
 function showError(message) {
   const doc = document.getElementById("content");
   doc.innerHTML = `<div class="error">
     <h2>Error</h2>
+    <p>
+    ${message}
+    </p>
+  </div>`;
+}
+
+function showInfo(message) {
+  const doc = document.getElementById("content");
+  doc.innerHTML = `<div class="info">
+    <h2>About Musicbox</h2>
     <p>
     ${message}
     </p>

@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "musicbox-mpd"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = ["mpd", "mpd client", "musicbox", "musicbox-mpd"]
+authors = [{ name = "Malcolm Worthy" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = ["bottle", "bottle-cors-plugin", "python-mpd2"]
+
+[project.urls]
+Documentation = "https://github.com/malworthy/musicbox-mpd#readme"
+Issues = "https://github.com/malworthy/musicbox-mpd/issues"
+Source = "https://github.com/malworthy/musicbox-mpd"
+
+[project.scripts]
+musicbox-mpd = "musicbox_mpd.server:main"
+
+[tool.hatch.version]
+path = "src/musicbox_mpd/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = ["mypy>=1.0.0"]
+# [tool.hatch.envs.types.scripts]
+# check = "mypy --install-types --non-interactive {args:src/musicbox_mpd tests}"
+
+# [tool.coverage.run]
+# source_pkgs = ["musicbox_mpd", "tests"]
+# branch = true
+# parallel = true
+# omit = ["src/musicbox_mpd/__about__.py"]
+
+# [tool.coverage.paths]
+# musicbox_mpd = ["src/musicbox_mpd", "*/musicbox-mpd/src/musicbox_mpd"]
+
+# [tool.coverage.report]
+# exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
