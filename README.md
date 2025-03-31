@@ -138,6 +138,14 @@ create a default config file in current directory
 
 # User Guide
 
+Musicbox has a very simple UI design. It contains just one textbox, and forgoes any sort of drop down menus.  This is so the UI can be written using as little lines of code as possible, making the interface faster and more reliable (less lines of code = less possibility of bugs).
+ 
+- Pressing the 'search' button with no text in the search box, returns all albums in your collection, ordered by album name.
+- Enter text to search for albums, artists or songs.
+- Commands always start with a colon.  Entering a command in the search box will not search your collections, but perform one of the 9 predefined commands.
+- From the start screen, you can click on the command listed at it will pre-populate the search box with that command.  Press the "Search" button to execute that command.
+- The start screen is displayed when no music is playing.  Once you start playing a song, it will display the album art, along with buttons to pause, skip and change the volume.
+
 Commands
 
 - :clear - clear the current queue
