@@ -11,6 +11,7 @@ import argparse
 from musicbox_mpd.musicplayer import MusicPlayer
 from musicbox_mpd import data
 from musicbox_mpd import __about__
+from musicbox_mpd import startup
 
 
 def query(sql, params):
@@ -281,88 +282,6 @@ def shuffle():
     return status_json("OK", result)
 
 
-def try_cache_library():
-    backoff = [5, 10, 30, 60, 120]
-    for i in range(5):
-        try:
-            player.cache_library(con)
-            return
-        except Exception as e:
-            print(f"Error caching library: {e}")
-            print(f"Retrying in {backoff[i]} seconds")
-            time.sleep(backoff[i])
-
-
-def add_radio_stations():
-    stations = config.get("stations")
-    if stations == None:
-        return
-    data.add_radio_stations(con, stations)
-
-
-def get_default_config(create=False):
-    default_config = """
-    {
-        "host" : "0.0.0.0",
-        "port" : 8080,
-        "mpd_host" : "localhost",
-        "mpd_port" : 6600,
-        "image_folder" : "/tmp/musicbox"
-    }
-    """
-    if create:
-        with open("musicbox-mpd.conf.json", "w") as f:
-            f.write(default_config)
-
-    return default_config
-
-
-def get_config(from_arg):
-    default_config = get_default_config()
-    if from_arg == None:
-        config_file = "/etc/musicbox-mpd.conf.json"
-    else:
-        config_file = from_arg
-
-    if pathlib.Path(config_file).is_file():
-        try:
-            f = open(config_file)
-            config = json.load(f)
-            f.close()
-            return config
-        except Exception as e:
-            print(f"Error loading config file: {e}")
-
-    print("No config file found, using defaults")
-    return json.loads(default_config)
-
-
-def create_service():
-    service_file = f"""
-[Unit]
-Description=MusicBox MPD Client
-After=multi-user.target
-
-[Service]
-Type=simple
-Restart=always
-WorkingDirectory={pathlib.Path(sys.argv[0]).parent.resolve()}
-ExecStart={sys.argv[0]}
-
-[Install]
-WantedBy=multi-user.target
-"""
-    with open("musicbox-mpd.service", "w") as f:
-        f.write(service_file)
-
-    print("File 'musicbox-mpd.service' created ")
-    print("To install musicbox-mpd as a service, run the following commands:")
-    print(" sudo mv musicbox-mpd.service /etc/systemd/system/")
-    print(" sudo systemctl daemon-reload")
-    print(" sudo systemctl enable musicbox-mpd")
-    print(" sudo systemctl start musicbox-mpd")
-
-
 def main():
     global app
     global config
@@ -370,7 +289,7 @@ def main():
     global con
 
     if args.service:
-        create_service()
+        startup.create_service()
         return
 
     if args.version:
@@ -378,19 +297,19 @@ def main():
         return
 
     if args.create_config:
-        get_default_config(True)
+        startup.get_default_config(True)
         print("Config file 'musicbox-mpd.conf.json' created")
         return
 
-    config = get_config(args.configfile)
+    config = startup.get_config(args.configfile)
 
     con = data.in_memory_db()
     app = app()
     app.install(cors_plugin('*'))
     player = MusicPlayer(config["mpd_host"], config["mpd_port"])
 
-    try_cache_library()
-    add_radio_stations()
+    startup.try_cache_library(player, con)
+    startup.add_radio_stations(con, config.get("stations"))
     run(host=config["host"], port=config["port"])
 
 

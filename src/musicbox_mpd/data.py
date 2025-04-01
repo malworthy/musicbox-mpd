@@ -2,7 +2,8 @@ import sqlite3
 
 
 def in_memory_db():
-    connection = sqlite3.connect(":memory:", check_same_thread=False)
+    connection = sqlite3.connect(
+        'file::memory:?cache=shared', uri=True,  check_same_thread=False)
     connection.row_factory = sqlite3.Row
 
     create_sql = """
