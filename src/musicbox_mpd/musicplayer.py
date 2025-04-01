@@ -1,6 +1,8 @@
 from mpd import MPDClient
 from threading import Thread
 import os
+import mpd
+import time
 
 
 class MusicPlayer:
@@ -20,9 +22,11 @@ class MusicPlayer:
 
         try:
             self.client.ping()
-        except Exception as e:
+        except mpd.ConnectionError as e:
             print(f"Reconnecting to server: {e}")
             self.client.connect(self.host, self.port)
+        except Exception as e:
+            print(f"Exception occurred connecting: {e}")
 
     def create_client(self):
         client = MPDClient()
@@ -47,7 +51,7 @@ class MusicPlayer:
             return self.client.mpd_version
         except Exception as e:
             print(f"Error getting MPD version: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return "Error getting MPD version"
 
     def add_to_queue(self, uri):
@@ -56,7 +60,7 @@ class MusicPlayer:
             self.client.add(uri)
         except Exception as e:
             print(f"Error adding song to queue: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return False
         return True
 
@@ -66,7 +70,7 @@ class MusicPlayer:
             self.client.deleteid(id)
         except Exception as e:
             print(f"Error removing song from queue: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return False
         return True
 
@@ -76,7 +80,7 @@ class MusicPlayer:
             self.client.clear()
         except Exception as e:
             print(f"Error clearing queue: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return False
         return True
 
@@ -86,7 +90,7 @@ class MusicPlayer:
             queue = self.client.playlistinfo()
         except Exception as e:
             print(f"Error getting queue: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return []
         return queue
 
@@ -96,7 +100,7 @@ class MusicPlayer:
             self.client.clear()
         except Exception as e:
             print(f"Error clearing queue: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return False
         return True
 
@@ -106,7 +110,7 @@ class MusicPlayer:
             self.client.play(0)
         except Exception as e:
             print(f"Error playing song: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return False
         return True
 
@@ -185,13 +189,52 @@ class MusicPlayer:
                 return filename
 
             self.connect()
-            img = self.client.albumart(uri)
+            img = self.client.readpicture(uri)
+            if img.get("binary") == None:
+                print("embedded art not found - looking up albumart")
+                img = self.client.albumart(uri)
+
             with open(filename, "wb") as file:
                 file.write(img["binary"])
             return filename
         except Exception as e:
             print(f"Error getting cover art: {e}")
             return None
+
+    # def get_cover_art(self, uri, img_folder):
+    #     if img_folder == None:
+    #         return None
+    #     try:
+    #         if os.path.exists(img_folder) == False:
+    #             os.makedirs(img_folder)
+    #     except Exception as e:
+    #         print(f"Error creating folder: {e}")
+    #         return None
+
+    #     try:
+    #         folder = os.path.dirname(uri)
+    #         folder = folder.replace("/", "-").replace("\\", "-")
+    #         filename = "_" + "".join(
+    #             x for x in folder if x.isalnum() or x == "-") + ".jpg"
+    #         filename = os.path.join(img_folder, filename)
+    #         if os.path.exists(filename):
+    #             return filename
+
+    #         print(f"getting image {time.strftime('%X')}")
+    #         local_client = self.create_client()
+    #         local_client.connect(self.host, self.port)
+    #         # self.connect()
+    #         img = local_client.albumart(uri)
+    #         local_client.disconnect()
+
+    #         print(f"got image from MPD {time.strftime('%X')}")
+    #         with open(filename, "wb") as file:
+    #             file.write(img["binary"])
+    #         print(f"Saved image to disk {time.strftime('%X')}")
+    #         return filename
+    #     except Exception as e:
+    #         print(f"Error getting cover art: {e}")
+    #         return None
 
     def skip(self):
         try:
@@ -208,7 +251,7 @@ class MusicPlayer:
             self.client.save(name)
         except Exception as e:
             print(f"Error saving playlist: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return False
         return True
 
@@ -306,7 +349,7 @@ class MusicPlayer:
             return self.client.replay_gain_status()
         except Exception as e:
             print(f"Error getting replay gain status: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return None
 
     def set_replay_gain_mode(self, mode):
@@ -316,7 +359,7 @@ class MusicPlayer:
             return True
         except Exception as e:
             print(f"Error setting replay gain mode: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return False
 
     def shuffle(self):
@@ -326,5 +369,5 @@ class MusicPlayer:
             return True
         except Exception as e:
             print(f"Error in shuffle: {e}")
-            self.error_message = e.msg
+            self.error_message = str(e)
             return False
