@@ -22,11 +22,11 @@ def get_args():
     return parser.parse_args()
 
 
-def try_cache_library(player, con):
+async def try_cache_library(player, con):
     backoff = [5, 10, 30, 60, 120]
     for i in range(5):
         try:
-            player.cache_library(con)
+            await player.cache_library(con)
             return
         except Exception as e:
             print(f"Error caching library: {e}")

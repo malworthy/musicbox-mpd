@@ -344,7 +344,7 @@ function fmtMSS(seconds) {
 }
 
 async function removeFromQueue(id, row) {
-  const result = await doAjax("DELETE", `${id}`);
+  const result = await doAjax("DELETE", `remove/${id}`);
   await updateQueueStatus();
   row.parentNode.removeChild(row);
 }
@@ -441,7 +441,7 @@ function showStartScreen() {
 async function showSettings() {
   const doc = document.getElementById("content");
 
-  const response = await fetch(`/settingsui`);
+  const response = await fetch(`/ui/settings.html`);
   let html;
   if (response.ok) {
     html = await response.text();
