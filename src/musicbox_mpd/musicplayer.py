@@ -40,7 +40,8 @@ class MusicPlayer:
         songs = await self.client.search("any", "")
         result = [(x.get("file"), x.get("title"), x.get("artist"), x.get("album"), x.get(
             "albumartist"), x.get("track"), x.get("time"), x.get("date")) for x in songs]
-        con.execute("delete from library")
+
+        con.execute("delete from library where radio != 1")
         con.executemany(
             "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)", result)
         print("Library cached")
@@ -263,33 +264,40 @@ class MusicPlayer:
                 return updating
 
             result = await self.client.update()
-            thread = Thread(target=self.wait_for_update, args=(con, ))
-            thread.start()
+            # thread = Thread(target=self.wait_for_update, args=(con, ))
+            # thread.start()
         except Exception as e:
             print(f"Error updating library: {e}")
             return None
         return result
 
-    def wait_for_update(self, con):
+    async def wait_for_update(self, con):
         try:
             local_client = self.create_client()
-            local_client.connect(self.host, self.port)
-            for i in range(2):
-                # self.connect()
-                print("Waiting for update")
-                local_client.idle("update")
-                print("update event happened")
-                status = local_client.status()
-                updating = status.get("updating_db")
-                print(f"Updating: {updating}")
-                if updating == None:
-                    self.cache_library(con)
-                    return True
+            await local_client.connect(self.host, self.port)
+            # for i in range(2):
+            # self.connect()
+
+            # idle = local_client.idle("update")
+            # async for event in idle:
+            #    print(f" event {event} happened")
+
+            print("Waiting for update")
+            async for subsystem in local_client.idle():
+                print("Idle change in ", subsystem)
+                if "update" in subsystem:
+                    status = await local_client.status()
+                    updating = status.get("updating_db")
+                    print(f"Updating: {updating}")
+                    if updating == None:
+                        await self.cache_library(con)
+                        return True
+
         except Exception as e:
             print(f"Error waiting for update: {e}")
             return False
         finally:
-            local_client.close()
+            local_client.disconnect()
         return False
 
     async def set_setting(self, name, value):

@@ -3,6 +3,7 @@ from starlette.responses import JSONResponse, FileResponse, HTMLResponse
 from starlette.routing import Route
 from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 from urllib.parse import unquote
 # import asyncio
 import uvicorn
@@ -218,8 +219,9 @@ async def delete_mixtape(request):
 
 
 async def update(request):
+    task = BackgroundTask(player.wait_for_update, con)
     result = await player.update(con)
-    return JSONResponse(result)
+    return JSONResponse(result, background=task)
 
 
 async def setting(request):
