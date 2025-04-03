@@ -278,7 +278,7 @@ app = Starlette(debug=True, routes=[
     Route('/queue', queue),
 
     Route('/playalbum', playalbum, methods=['POST']),
-    Route('/queuealbum', queue, methods=['POST']),
+    Route('/queuealbum', queuealbum, methods=['POST']),
     Route('/playsong/{id}', playsong, methods=['POST']),
     Route('/rand/{num}', random_queue, methods=['POST']),
     Route('/mix', get_mixtapes),

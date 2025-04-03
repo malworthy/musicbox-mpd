@@ -33,9 +33,27 @@ nav ul {
   padding: 0px;
 }
 
-.content-list li {
+/* .content-list li {
   margin: 5px;
   background: gray;
+  color: black;
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+} */
+
+.list-item {
+  margin: 5px;
+  background: gray;
+  color: black;
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+}
+
+.added {
+  margin: 5px;
+  background: green;
   color: black;
   display: flex;
   justify-content: space-between;
