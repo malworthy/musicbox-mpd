@@ -106,7 +106,7 @@ async function updateStatus(updateContent = true) {
     playBtn.innerHTML = "Stop";
     playBtn.onclick = () => stopPlay();
     forceRedraw(playBtn); // Fix IOS bug where it refuses to update text on the button
-    if (updateContent && !showingResults) showCoverArt(songDetails.libraryid);
+    if (updateContent && !showingResults) showCoverArt(songDetails);
     playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
   } else {
     isPlaying = false;
@@ -137,22 +137,32 @@ async function play() {
   else updateStatus();
 }
 
-async function playAlbum(path) {
+async function playAlbum(path, listItem) {
   showingResults = false;
   const status = await doAjax("POST", "playalbum", { path: path });
-  if (status.status === "Error") showError(status.message);
+  if (status.status === "Error") {
+    showError(status.message);
+    return;
+  }
+  if (status.status === "notplay") {
+    showInfo("There is already a song playing.  Please stop it first before playing a new album.", "Notice");
+    return;
+  }
   updateStatus();
 }
 
-async function playOneSong(id) {
+async function playOneSong(id, listItem) {
   showingResults = false;
   const status = await doAjax("POST", `playsong/${id}`);
-  if (status.status === "Error") showError(status.message);
-  updateStatus();
-}
-
-async function queueAlbum(path) {
-  await doAjax("POST", "queuealbum", { path: path });
+  if (status.status === "Error") {
+    showError(status.message);
+    return;
+  }
+  if (status.status === "next") {
+    listItem.className = "playnext";
+    updateQueueStatus();
+    return;
+  }
   updateStatus();
 }
 
@@ -174,9 +184,18 @@ async function updateQueueStatus() {
   }
 }
 
-async function queueSong(id) {
+async function queueAlbum(path, listItem) {
+  await doAjax("POST", "queuealbum", { path: path });
+  updateStatus();
+  //listItem = document.getElementById(`row${row}`);
+  listItem.className = "added";
+}
+
+async function queueSong(id, listItem) {
   const result = await doAjax("POST", `add/${id}`);
   await updateQueueStatus();
+  //listItem = document.getElementById(`row${row}`);
+  listItem.className = "added";
 }
 
 async function getAlbum(name, rowIndex) {
@@ -189,14 +208,15 @@ async function getAlbum(name, rowIndex) {
   document.getElementById("content").innerHTML = "";
   for (const song of songs) {
     const listItem = document.createElement("li");
+    listItem.className = "list-item";
     const divText = document.createElement("div");
     listItem.id = `song_row${i}`;
     divText.innerHTML = `<h4>${i++}. ${song.tracktitle} ${fmtMSS(song.length)}</h4>
     <p>${song.artist} - ${song.album}</p>`;
 
     const divButtons = document.createElement("div");
-    divButtons.appendChild(addButton("Play", () => playOneSong(song.id)));
-    divButtons.appendChild(addButton("Add", () => queueSong(song.id)));
+    divButtons.appendChild(addButton("Play", () => playOneSong(song.id, listItem)));
+    divButtons.appendChild(addButton("Add", () => queueSong(song.id, listItem)));
 
     listItem.appendChild(divText);
     listItem.appendChild(divButtons);
@@ -213,6 +233,7 @@ async function getMixtapes() {
   document.getElementById("content").innerHTML = "";
   for (const tape of mixtapes) {
     const listItem = document.createElement("li");
+    listItem.className = "list-item";
     const divText = document.createElement("div");
     divText.innerHTML = `<h4>${i++}. ${tape.playlist}</h4>`;
 
@@ -280,7 +301,7 @@ async function doCommand(command) {
     await doAjax("POST", "shuffle");
   } else if (command.startsWith(":a")) {
     ver = await doAjax("GET", "version");
-    showInfo(`<p>Musicbox Version: ${ver.musicbox}</p> <p>MPD Version: ${ver.mpd}</p>`);
+    showInfo(`<p>Musicbox Version: ${ver.musicbox}</p> <p>MPD Version: ${ver.mpd}</p>`, "About MusicBox");
   } else {
     return;
   }
@@ -303,6 +324,7 @@ async function doSearch() {
   document.getElementById("content").innerHTML = "";
   for (const album of albums) {
     const listItem = document.createElement("li");
+    listItem.className = "list-item";
     listItem.id = `row${i++}`;
     const divText = document.createElement("div");
     if (album.tracktitle) {
@@ -314,11 +336,11 @@ async function doSearch() {
     }
     const divButtons = document.createElement("div");
     if (album.tracktitle) {
-      divButtons.appendChild(addButton("Play", () => playOneSong(album.id)));
-      divButtons.appendChild(addButton("Add", () => queueSong(album.id)));
+      divButtons.appendChild(addButton("Play", () => playOneSong(album.id, listItem)));
+      divButtons.appendChild(addButton("Add", () => queueSong(album.id, listItem)));
     } else {
-      divButtons.appendChild(addButton("Play", () => playAlbum(album.path)));
-      divButtons.appendChild(addButton("Add", () => queueAlbum(album.path)));
+      divButtons.appendChild(addButton("Play", () => playAlbum(album.path, listItem)));
+      divButtons.appendChild(addButton("Add", () => queueAlbum(album.path, listItem)));
     }
     listItem.appendChild(divText);
     listItem.appendChild(divButtons);
@@ -344,7 +366,7 @@ function fmtMSS(seconds) {
 }
 
 async function removeFromQueue(id, row) {
-  const result = await doAjax("DELETE", `${id}`);
+  const result = await doAjax("DELETE", `remove/${id}`);
   await updateQueueStatus();
   row.parentNode.removeChild(row);
 }
@@ -357,6 +379,7 @@ async function getQueue() {
 
   for (const song of queue) {
     const listItem = document.createElement("li");
+    listItem.className = "list-item";
     const divText = document.createElement("div");
     divText.innerHTML = `<h4>${i++}. ${song.title ?? song.file} ${fmtMSS(song.duration)}</h4>
     <p>${song.artist ?? ""} - ${song.album ?? ""}</p>`;
@@ -387,29 +410,53 @@ async function volume(amount) {
   adjustingVolume = true;
 }
 
-function showCoverArt(id) {
+function showCoverArt(songDetails) {
   const doc = document.getElementById("content");
   doc.innerHTML = `
-  <img id = "coverart" class="center" style="object-fit: contain" width=300 height=300 src="coverart/${id}" />
+  <img id = "coverart" class="center" style="object-fit: contain" width=300 height=300 src="coverart/${songDetails.libraryid}" />
+  <div class="center" id="songDetails">
+
+  </div>
   <div class="center">
     <ul class="controls">
-      <li style="background-color: black;">
+      <li style="background-color: black;" class="list-item">
         <button onclick="volume(-5);">-</button>
       </li>
-      <li style="background-color: black;">
+      <li style="background-color: black;" class="list-item">
         <button onclick="skip();">Skip</button>
       </li>
-      <li style="background-color: black;">
+      <li style="background-color: black;" class="list-item">
         <button id="pause" onclick="pause()">Pause</button>
       </li>
-      <li style="background-color: black;">
+      <li style="background-color: black;" class="list-item">
         <button onclick="volume(5);">+</button>
       </li>
     </ul>
   </div>
   <div class="center" id="vol"></div>
   `;
+
   document.getElementById("coverart")?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+
+  if (songDetails.bitrate == 0) {
+    setTimeout(async () => {
+      const sd = await doAjax("GET", "status");
+      setSongDetails(sd);
+    }, 500);
+  } else {
+    setSongDetails(songDetails);
+  }
+}
+
+function setSongDetails(songDetails) {
+  file_extension = songDetails.file.split(".").pop().toUpperCase();
+  const audio = songDetails.audio?.split(":");
+  let details = `${songDetails.bitrate}kbps`;
+  if (audio && file_extension == "FLAC") {
+    details = `${audio[0] / 1000}kHz ${audio[1]}bit`;
+  }
+  if (file_extension == "M4A") file_extension = "AAC";
+  document.getElementById("songDetails").innerHTML = `${file_extension} ${details}`;
 }
 
 function popSearch(command) {
@@ -421,7 +468,7 @@ function showStartScreen() {
   const doc = document.getElementById("content");
 
   doc.innerHTML = `
-        <li>
+        <li class="list-item">
           <div style="max-width: 100%;">
             <h2>MusicBox</h2>
             <h3>Commands</h3>
@@ -441,7 +488,7 @@ function showStartScreen() {
 async function showSettings() {
   const doc = document.getElementById("content");
 
-  const response = await fetch(`/settingsui`);
+  const response = await fetch(`/ui/settings.html`);
   let html;
   if (response.ok) {
     html = await response.text();
@@ -501,14 +548,16 @@ function showError(message) {
     ${message}
     </p>
   </div>`;
+  doc.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 }
 
-function showInfo(message) {
+function showInfo(message, title) {
   const doc = document.getElementById("content");
   doc.innerHTML = `<div class="info">
-    <h2>About Musicbox</h2>
+    <h2>${title}</h2>
     <p>
     ${message}
     </p>
   </div>`;
+  doc.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 }

@@ -1,5 +1,5 @@
 import sys
-from musicbox_mpd.server import main
+from musicbox_mpd.main import start
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(start())

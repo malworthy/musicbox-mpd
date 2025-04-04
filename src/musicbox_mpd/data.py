@@ -17,7 +17,8 @@ def in_memory_db():
             albumartist text, 
             tracknumber int, 
             length int, 
-            year text
+            year text,
+            radio int
         )
         """
 
@@ -89,7 +90,7 @@ def get_random_songs(con, number):
 
 
 def add_radio_stations(con, stations):
-    sql = "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)"
+    sql = "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year, radio) values (?,?,?,?,?,?,?,?,1)"
     count = 1
     for station in stations:
         url = station.get("url")
