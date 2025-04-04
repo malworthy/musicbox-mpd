@@ -65,6 +65,18 @@ class MusicPlayer:
             return False
         return True
 
+    async def play_next(self, uri, status):
+        try:
+            await self.connect()
+            # status = await self.client.status()
+            song = status.get("song")
+            await self.client.addid(uri, int(song) + 1)
+        except Exception as e:
+            print(f"Error adding song to queue: {e}")
+            self.error_message = str(e)
+            return False
+        return True
+
     async def remove_from_queue(self, id):
         try:
             await self.connect()
@@ -275,12 +287,6 @@ class MusicPlayer:
         try:
             local_client = self.create_client()
             await local_client.connect(self.host, self.port)
-            # for i in range(2):
-            # self.connect()
-
-            # idle = local_client.idle("update")
-            # async for event in idle:
-            #    print(f" event {event} happened")
 
             print("Waiting for update")
             async for subsystem in local_client.idle():

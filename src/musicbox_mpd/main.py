@@ -155,9 +155,13 @@ async def queuealbum(request):
 async def playsong(request):
     id = request.path_params["id"]
     status = await player.status()
-    if status.get("state") == "play":
-        return JSONResponse(status_json("Already playing"))
     uri = data.get_uri(con, id)
+    if status.get("state") == "play":
+        result = await player.play_next(uri, status)
+        if not result:
+            return JSONResponse(status_json("Error", player.error_message))
+        return JSONResponse(status_json("next"))
+
     await player.clear_queue()
     await player.add_to_queue(uri)
     if not await player.play():
@@ -169,13 +173,16 @@ async def playsong(request):
 
 async def playalbum(request):
     status = await player.status()
-    if status.get("state") == "play":
-        return JSONResponse(status_json("Already playing"))
-    await player.clear_queue()
     json = await request.json()
     uri = json["path"][:-1]
+
+    if status.get("state") == "play":
+        return JSONResponse(status_json("notplay"))
+
+    await player.clear_queue()
     await player.add_to_queue(uri)
     await player.play()
+
     return JSONResponse(status_json("OK"))
 
 
@@ -320,4 +327,4 @@ def start():
         return
 
     uvicorn.run("musicbox_mpd.main:app",
-                host=config["host"], port=config["port"], reload=True)
+                host=config["host"], port=config["port"], reload=False)

@@ -60,6 +60,15 @@ nav ul {
   padding: 5px;
 }
 
+.playnext {
+  margin: 5px;
+  background: cyan;
+  color: black;
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+}
+
 .footer ul {
   width: 100%;
   display: flex;

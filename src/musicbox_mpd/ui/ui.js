@@ -137,17 +137,32 @@ async function play() {
   else updateStatus();
 }
 
-async function playAlbum(path) {
+async function playAlbum(path, listItem) {
   showingResults = false;
   const status = await doAjax("POST", "playalbum", { path: path });
-  if (status.status === "Error") showError(status.message);
+  if (status.status === "Error") {
+    showError(status.message);
+    return;
+  }
+  if (status.status === "notplay") {
+    showInfo("There is already a song playing.  Please stop it first before playing a new album.", "Notice");
+    return;
+  }
   updateStatus();
 }
 
-async function playOneSong(id) {
+async function playOneSong(id, listItem) {
   showingResults = false;
   const status = await doAjax("POST", `playsong/${id}`);
-  if (status.status === "Error") showError(status.message);
+  if (status.status === "Error") {
+    showError(status.message);
+    return;
+  }
+  if (status.status === "next") {
+    listItem.className = "playnext";
+    updateQueueStatus();
+    return;
+  }
   updateStatus();
 }
 
@@ -200,7 +215,7 @@ async function getAlbum(name, rowIndex) {
     <p>${song.artist} - ${song.album}</p>`;
 
     const divButtons = document.createElement("div");
-    divButtons.appendChild(addButton("Play", () => playOneSong(song.id)));
+    divButtons.appendChild(addButton("Play", () => playOneSong(song.id, listItem)));
     divButtons.appendChild(addButton("Add", () => queueSong(song.id, listItem)));
 
     listItem.appendChild(divText);
@@ -286,7 +301,7 @@ async function doCommand(command) {
     await doAjax("POST", "shuffle");
   } else if (command.startsWith(":a")) {
     ver = await doAjax("GET", "version");
-    showInfo(`<p>Musicbox Version: ${ver.musicbox}</p> <p>MPD Version: ${ver.mpd}</p>`);
+    showInfo(`<p>Musicbox Version: ${ver.musicbox}</p> <p>MPD Version: ${ver.mpd}</p>`, "About MusicBox");
   } else {
     return;
   }
@@ -321,10 +336,10 @@ async function doSearch() {
     }
     const divButtons = document.createElement("div");
     if (album.tracktitle) {
-      divButtons.appendChild(addButton("Play", () => playOneSong(album.id)));
+      divButtons.appendChild(addButton("Play", () => playOneSong(album.id, listItem)));
       divButtons.appendChild(addButton("Add", () => queueSong(album.id, listItem)));
     } else {
-      divButtons.appendChild(addButton("Play", () => playAlbum(album.path)));
+      divButtons.appendChild(addButton("Play", () => playAlbum(album.path, listItem)));
       divButtons.appendChild(addButton("Add", () => queueAlbum(album.path, listItem)));
     }
     listItem.appendChild(divText);
@@ -533,14 +548,16 @@ function showError(message) {
     ${message}
     </p>
   </div>`;
+  doc.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 }
 
-function showInfo(message) {
+function showInfo(message, title) {
   const doc = document.getElementById("content");
   doc.innerHTML = `<div class="info">
-    <h2>About Musicbox</h2>
+    <h2>${title}</h2>
     <p>
     ${message}
     </p>
   </div>`;
+  doc.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 }

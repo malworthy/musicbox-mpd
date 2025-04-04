@@ -22,7 +22,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = ["starlette", "uvicorn", "python-mpd2"]
+dependencies = ["starlette", "uvicorn[standard]", "python-mpd2"]
 
 [project.urls]
 Documentation = "https://github.com/malworthy/musicbox-mpd#readme"
