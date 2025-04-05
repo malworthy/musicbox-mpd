@@ -49,8 +49,16 @@ async function resetStatus() {
   if (playStatus === "stop") {
     showStartScreen();
   } else {
-    updateStatus();
+    await updateStatus();
   }
+}
+
+async function showHome() {
+  if (document.getElementById("home")) {
+    await resetStatus();
+    return;
+  }
+  showStartScreen();
 }
 
 function updatePlayTime() {
@@ -474,10 +482,11 @@ function popSearch(command) {
 }
 
 function showStartScreen() {
+  showingResults = false;
   const doc = document.getElementById("content");
 
   doc.innerHTML = `
-        <li class="list-item">
+        <li class="list-item" id="home">
           <div style="max-width: 100%;">
             <h2>MusicBox</h2>
             <h3>Commands</h3>
@@ -489,6 +498,8 @@ function showStartScreen() {
             <p><strong><a href="#" onclick="popSearch(':update')">:update</a></strong> - re-scan music library</p>
             <p><strong><a href="#" onclick="popSearch(':settings')">:settings</a></strong> - MPD settings</p>
             <p><strong><a href="#" onclick="popSearch(':shuffle')">:shuffle</a></strong> - shuffle queue</p>
+             <p><strong><a href="#" onclick="popSearch(':error')">:error</a></strong> - show last MPD error</p>
+              <p><strong><a href="#" onclick="popSearch(':about')">:about</a></strong> - about musicbox</p>
           </div>
         </li>
   `;
