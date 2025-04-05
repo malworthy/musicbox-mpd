@@ -103,9 +103,9 @@ async function updateStatus(updateContent = true) {
     duration = songDetails.duration;
     songName.innerHTML = songDetails.title;
     artistName.innerHTML = songDetails.artist;
-    playBtn.innerHTML = "Stop";
+    playBtn.innerHTML = `<img width="16px" height="16px" src="ui/stop-solid.svg" />`;
     playBtn.onclick = () => stopPlay();
-    forceRedraw(playBtn); // Fix IOS bug where it refuses to update text on the button
+    //forceRedraw(playBtn); // Fix IOS bug where it refuses to update text on the button
     if (updateContent && !showingResults) showCoverArt(songDetails);
     playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
   } else {
@@ -113,7 +113,7 @@ async function updateStatus(updateContent = true) {
     playTime.innerHTML = "";
     songName.innerHTML = "Stopped";
     artistName.innerHTML = "Playing";
-    playBtn.innerHTML = "Play";
+    playBtn.innerHTML = `<img style="padding-left:2px" width="16px" height="16px" src="ui/play-solid.svg" />`;
     playBtn.onclick = () => play();
     if (updateContent && !showingResults) showStartScreen();
   }
@@ -239,8 +239,8 @@ async function getMixtapes() {
 
     const divButtons = document.createElement("div");
     divButtons.appendChild(addButton("Save", () => mixtapeSave(tape.playlist)));
-    divButtons.appendChild(addButton("Load", () => mixtapeAdd(tape.playlist)));
-    divButtons.appendChild(addButton("Delete", () => mixtapeDelete(tape.playlist)));
+    divButtons.appendChild(addButton("Add", () => mixtapeAdd(tape.playlist)));
+    divButtons.appendChild(addButton("Del", () => mixtapeDelete(tape.playlist)));
 
     listItem.appendChild(divText);
     listItem.appendChild(divButtons);
@@ -265,9 +265,18 @@ function mixtapeDelete(name) {
 
 function addButton(text, clickEvent) {
   let button = document.createElement("button");
-  button.textContent = text;
+  if (text === "Play") {
+    button.innerHTML = "<img style='padding-left:2px' width='16px' height='16px' src='ui/play-solid.svg' />";
+  } else if (text === "Add") {
+    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/plus-solid.svg' />";
+  } else if (text === "Del") {
+    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/trash-solid.svg' />";
+  } else if (text === "Save") {
+    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/floppy-disk-solid.svg' />";
+  }
   button.onclick = clickEvent;
   button.style.margin = "3px";
+  button.className = "round-button";
   return button;
 }
 
@@ -414,22 +423,22 @@ function showCoverArt(songDetails) {
   const doc = document.getElementById("content");
   doc.innerHTML = `
   <img id = "coverart" class="center" style="object-fit: contain" width=300 height=300 src="coverart/${songDetails.libraryid}" />
-  <div class="center" id="songDetails">
+  <div class="center led-blue" style="font-family: fivebyseven;" id="songDetails">
 
   </div>
   <div class="center">
     <ul class="controls">
       <li style="background-color: black;" class="list-item">
-        <button onclick="volume(-5);">-</button>
+        <button class="round-button" onclick="volume(-5);"><img style="padding-left:1px" width="16px" height="16px" src="ui/minus-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button onclick="skip();">Skip</button>
+        <button class="round-button" onclick="skip();"><img style="padding-left:2px" width="16px" height="16px" src="ui/forward-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button id="pause" onclick="pause()">Pause</button>
+        <button class="round-button" id="pause" onclick="pause()"><img style="padding-left:1px" width="16px" height="16px" src="ui/pause-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button onclick="volume(5);">+</button>
+        <button class="round-button" onclick="volume(5);"><img style="padding-left:1px" width="16px" height="16px" src="ui/plus-solid.svg" /></button>
       </li>
     </ul>
   </div>

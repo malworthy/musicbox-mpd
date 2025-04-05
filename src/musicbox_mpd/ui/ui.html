@@ -11,12 +11,23 @@
     <script src="/ui/ui.js?v={ver}"></script>
     <nav class="nav">
       <ul>
-        <li><input placeholder="" type="text" id="search" onkeydown="" style="width: 160px" /></li>
-        <li>
-          <button onclick="processCommand()">Search</button>
+        <li style="margin-right: 12px">
+          <input class="search-box" placeholder="" type="text" id="search" onkeydown="" style="width: 160px" />
         </li>
-        <li>
-          <button onclick="getQueue()">Queue</button>
+        <li style="margin-right: 12px">
+          <button class="big-round-button" onclick="processCommand()" title="Search">
+            <img style="padding-left: 1px" width="16px" height="16px" src="ui/magnifying-glass-solid.svg" />
+          </button>
+        </li>
+        <li style="margin-right: 12px">
+          <button class="big-round-button" onclick="getQueue()" title="Queue">
+            <img style="padding-left: 1px" width="16px" height="16px" src="ui/list-ul-solid.svg" />
+          </button>
+        </li>
+        <li style="margin-right: 12px">
+          <button class="big-round-button" onclick="getQueue()" title="View commands">
+            <img width="16px" height="16px" src="ui/house-solid.svg" />
+          </button>
         </li>
       </ul>
     </nav>
@@ -25,7 +36,9 @@
     </div>
     <nav class="footer">
       <ul>
-        <div style="padding-top: 0px"><button id="play">Play</button></div>
+        <div style="padding-top: 0px">
+          <button id="play" class="round-button"><img width="16px" height="16px" src="ui/play-solid.svg" /></button>
+        </div>
         <div style="padding-left: 6px; font-size: small" onclick="resetStatus();">
           <div><strong id="songName">Song Name</strong></div>
           <div id="artistName">Artist Name</div>

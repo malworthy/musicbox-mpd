@@ -1,3 +1,8 @@
+@font-face {
+  font-family: "fivebyseven";
+  src: URL("5by7.ttf") format("truetype");
+}
+
 html {
   margin: 0;
   padding: 0;
@@ -124,7 +129,7 @@ section {
   flex-direction: column;
 }
 
-button {
+/* button {
   border: 3px outset gray;
   background-color: black;
   color: white;
@@ -136,7 +141,87 @@ button {
 button:hover {
   background-color: blue;
   color: white;
+} */
+
+.round-button {
+  box-sizing: border-box;
+  /* display: block; */
+  width: 32px;
+  height: 32px;
+  /* padding-top: 1px;
+  padding-left: 6px; */
+  line-height: 20px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #f5f5f5;
+  text-align: center;
+  text-decoration: none;
+  background-color: gray;
+  font-size: 20px;
+  font-weight: bold;
+  transition: all 0.3s ease;
 }
+.round-button:hover {
+  background-color: lightgray;
+  /* box-shadow: 0px 0px 10px rgba(255, 255, 100, 1);
+  text-shadow: 0px 0px 10px rgba(255, 255, 100, 1); */
+}
+
+.big-round-button {
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  line-height: 10px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #f5f5f5;
+  text-align: center;
+  text-decoration: none;
+  background-color: gray;
+  /* font-size: 20px; */
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+.big-round-button:hover {
+  background-color: lightgray;
+}
+
+/* CSS */
+.button-text {
+  background-color: grey;
+  border: 2px solid white;
+  border-radius: 10px;
+  /* box-shadow: #422800 4px 4px 0 0; */
+  color: black;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 600;
+  /* font-size: 18px; */
+  margin-top: 2px;
+  padding: 2px 6px;
+  line-height: 27px;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.button-text:hover {
+  background-color: #fff;
+}
+
+.button-text:active {
+  box-shadow: #422800 2px 2px 0 0;
+  transform: translate(2px, 2px);
+}
+
+/* @media (min-width: 768px) {
+  .button-74 {
+    min-width: 120px;
+    padding: 0 25px;
+  }
+} */
 
 input {
   background-color: black;
@@ -163,6 +248,48 @@ input {
   display: block;
   margin-left: auto;
   margin-right: auto;
+}
+
+.led-blue {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 300px;
+  height: 40px;
+  background-color: rgb(0, 0, 128);
+  text-align: center;
+  line-height: 50px;
+  font-size: 14pt;
+  border-top: 3px solid #000000cc;
+  border-left: 3px solid #000000cc;
+  border-bottom: 1px solid #cfcfcf33;
+  border-right: 1px solid #cfcfcf33;
+  border-radius: 10px;
+  box-shadow: 0px 0px 50px #000000ee inset;
+  text-shadow: 0px 0px 20px #00ffffcc;
+  /* margin: 5px; */
+  color: #00ffffcc;
+}
+
+.search-box {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 160px;
+  /* height: 40px; */
+  background-color: rgb(0, 0, 128);
+  text-align: left;
+  /* line-height: 50px; */
+  font-size: 12pt;
+  border-top: 3px solid #000000cc;
+  border-left: 3px solid #000000cc;
+  border-bottom: 1px solid #cfcfcf33;
+  border-right: 1px solid #cfcfcf33;
+  border-radius: 5px;
+  box-shadow: 0px 0px 50px #000000ee inset;
+  text-shadow: 0px 0px 20px #00ffffcc;
+  /* margin: 5px; */
+  color: #00ffffcc;
 }
 
 .controls {
