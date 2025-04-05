@@ -129,42 +129,22 @@ section {
   flex-direction: column;
 }
 
-/* button {
-  border: 3px outset gray;
-  background-color: black;
-  color: white;
-  cursor: pointer;
-  font-family: monospace;
-  padding: 7px;
-}
-
-button:hover {
-  background-color: blue;
-  color: white;
-} */
-
 .round-button {
   box-sizing: border-box;
-  /* display: block; */
-  width: 32px;
-  height: 32px;
-  /* padding-top: 1px;
-  padding-left: 6px; */
-  line-height: 20px;
+  width: 40px;
+  height: 40px;
+  line-height: 10px;
   border: 2px solid #fff;
   border-radius: 50%;
   color: #f5f5f5;
   text-align: center;
   text-decoration: none;
   background-color: gray;
-  font-size: 20px;
   font-weight: bold;
   transition: all 0.3s ease;
 }
 .round-button:hover {
   background-color: lightgray;
-  /* box-shadow: 0px 0px 10px rgba(255, 255, 100, 1);
-  text-shadow: 0px 0px 10px rgba(255, 255, 100, 1); */
 }
 
 .big-round-button {
@@ -178,7 +158,6 @@ button:hover {
   text-align: center;
   text-decoration: none;
   background-color: gray;
-  /* font-size: 20px; */
   font-weight: bold;
   transition: all 0.3s ease;
 }
@@ -186,42 +165,10 @@ button:hover {
   background-color: lightgray;
 }
 
-/* CSS */
-.button-text {
-  background-color: grey;
-  border: 2px solid white;
-  border-radius: 10px;
-  /* box-shadow: #422800 4px 4px 0 0; */
-  color: black;
-  cursor: pointer;
-  display: inline-block;
-  font-weight: 600;
-  /* font-size: 18px; */
-  margin-top: 2px;
-  padding: 2px 6px;
-  line-height: 27px;
-  text-align: center;
-  text-decoration: none;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-}
-
-.button-text:hover {
-  background-color: #fff;
-}
-
 .button-text:active {
   box-shadow: #422800 2px 2px 0 0;
   transform: translate(2px, 2px);
 }
-
-/* @media (min-width: 768px) {
-  .button-74 {
-    min-width: 120px;
-    padding: 0 25px;
-  }
-} */
 
 input {
   background-color: black;
