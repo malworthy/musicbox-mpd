@@ -258,6 +258,16 @@ class MusicPlayer:
             return []
         return playlists
 
+    async def list_playlist(self, name):
+        try:
+            await self.connect()
+            songs = await self.client.listplaylistinfo(name)
+        except Exception as e:
+            print(f"Error listing playlist: {e}")
+            self.error_message = str(e)
+            return []
+        return songs
+
     async def load_playlist(self, name):
         try:
             await self.connect()

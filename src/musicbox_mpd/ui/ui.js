@@ -159,9 +159,9 @@ async function playAlbum(path, listItem) {
   updateStatus();
 }
 
-async function playOneSong(id, listItem) {
+async function playOneSong(filename, listItem) {
   showingResults = false;
-  const status = await doAjax("POST", `playsong/${id}`);
+  const status = await doAjax("POST", `playsong`, { uri: filename });
   if (status.status === "Error") {
     showError(status.message);
     return;
@@ -207,8 +207,6 @@ async function queueSong(id, listItem) {
 }
 
 async function getAlbum(name, rowIndex) {
-  //name = decodeURIComponent(name);
-  //console.log("id of element", o.id);
   prevRowIndex = rowIndex;
   var songs = await doAjax("GET", `album?search=${encodeURIComponent(name)}`);
   if (songs === null) return;
@@ -223,7 +221,7 @@ async function getAlbum(name, rowIndex) {
     <p>${song.artist} - ${song.album}</p>`;
 
     const divButtons = document.createElement("div");
-    divButtons.appendChild(addButton("Play", () => playOneSong(song.id, listItem)));
+    divButtons.appendChild(addButton("Play", () => playOneSong(song.filename, listItem)));
     divButtons.appendChild(addButton("Add", () => queueSong(song.id, listItem)));
 
     listItem.appendChild(divText);
@@ -232,6 +230,35 @@ async function getAlbum(name, rowIndex) {
   }
   const firstRow = document.getElementById("song_row1");
   firstRow?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+}
+
+async function getMixtape(name) {
+  var songs = await doAjax("GET", `mix/${encodeURIComponent(name)}`);
+  if (songs === null) return;
+  let i = 1;
+  document.getElementById("content").innerHTML = "";
+  for (const song of songs) {
+    const listItem = document.createElement("li");
+    listItem.className = "list-item";
+    const divText = document.createElement("div");
+    listItem.id = `song_row${i}`;
+    divText.innerHTML = `<h4>${i++}. ${song.title} ${fmtMSS(song.duration)}</h4>
+    <p>${song.artist} - ${song.album}</p>`;
+
+    const divButtons = document.createElement("div");
+    divButtons.appendChild(addButton("Play", () => playOneSong(song.file, listItem)));
+    divButtons.appendChild(addButton("Add", () => queueSong(song.id, listItem)));
+
+    listItem.appendChild(divText);
+    listItem.appendChild(divButtons);
+    document.getElementById("content").appendChild(listItem);
+  }
+  const firstRow = document.getElementById("song_row1");
+  firstRow?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+}
+
+function encodeStrParam(str) {
+  return encodeURIComponent(str).replace(/'/g, "%27");
 }
 
 async function getMixtapes() {
@@ -243,7 +270,10 @@ async function getMixtapes() {
     const listItem = document.createElement("li");
     listItem.className = "list-item";
     const divText = document.createElement("div");
-    divText.innerHTML = `<h4>${i++}. ${tape.playlist}</h4>`;
+
+    divText.innerHTML = `<h4>${i++}. <a href="#" onclick="getMixtape('${encodeStrParam(tape.playlist)}')"> ${
+      tape.playlist
+    }</a></h4>`;
 
     const divButtons = document.createElement("div");
     divButtons.appendChild(addButton("Save", () => mixtapeSave(tape.playlist)));
@@ -353,7 +383,7 @@ async function doSearch() {
     }
     const divButtons = document.createElement("div");
     if (album.tracktitle) {
-      divButtons.appendChild(addButton("Play", () => playOneSong(album.id, listItem)));
+      divButtons.appendChild(addButton("Play", () => playOneSong(album.filename, listItem)));
       divButtons.appendChild(addButton("Add", () => queueSong(album.id, listItem)));
     } else {
       divButtons.appendChild(addButton("Play", () => playAlbum(album.path, listItem)));
@@ -437,16 +467,16 @@ function showCoverArt(songDetails) {
   <div class="center">
     <ul class="controls">
       <li style="background-color: black;" class="list-item">
-        <button class="round-button" onclick="volume(-5);"><img style="padding-left:1px" width="16px" height="16px" src="ui/minus-solid.svg" /></button>
+        <button class="black-button" onclick="volume(-5);"><img style="filter: invert(1); padding-left:1px" width="16px" height="16px" src="ui/minus-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="round-button" onclick="skip();"><img style="padding-left:2px" width="16px" height="16px" src="ui/forward-solid.svg" /></button>
+        <button class="black-button" onclick="skip();"><img style="filter: invert(1); padding-left:2px" width="16px" height="16px" src="ui/forward-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="round-button" id="pause" onclick="pause()"><img style="padding-left:1px" width="16px" height="16px" src="ui/pause-solid.svg" /></button>
+        <button class="black-button" id="pause" onclick="pause()"><img style="filter: invert(1); padding-left:1px" width="16px" height="16px" src="ui/pause-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="round-button" onclick="volume(5);"><img style="padding-left:1px" width="16px" height="16px" src="ui/plus-solid.svg" /></button>
+        <button class="black-button" onclick="volume(5);"><img style="filter: invert(1); padding-left:1px" width="16px" height="16px" src="ui/plus-solid.svg" /></button>
       </li>
     </ul>
   </div>

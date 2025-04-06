@@ -153,9 +153,14 @@ async def queuealbum(request):
 
 
 async def playsong(request):
-    id = request.path_params["id"]
+    json = await request.json()
+    uri = json.get("uri")
+    if uri == None:
+        return JSONResponse(status_json("Error", "No URI provided"))
+
+    # id = request.path_params["id"]
     status = await player.status()
-    uri = data.get_uri(con, id)
+    # uri = data.get_uri(con, id)
     if status.get("state") == "play":
         result = await player.play_next(uri, status)
         if not result:
@@ -225,6 +230,12 @@ async def delete_mixtape(request):
     return JSONResponse(status_json("OK"))
 
 
+async def get_mixtape(request):
+    name = unquote(request.path_params["name"])
+    result = await player.list_playlist(name)
+    return JSONResponse(result)
+
+
 async def update(request):
     task = BackgroundTask(player.wait_for_update, con)
     result = await player.update(con)
@@ -286,13 +297,14 @@ app = Starlette(debug=True, routes=[
 
     Route('/playalbum', playalbum, methods=['POST']),
     Route('/queuealbum', queuealbum, methods=['POST']),
-    Route('/playsong/{id}', playsong, methods=['POST']),
+    Route('/playsong', playsong, methods=['POST']),
     Route('/rand/{num}', random_queue, methods=['POST']),
     Route('/mix', get_mixtapes),
     Route('/loadmix/{name}', load_mixtape, methods=['POST']),
     Route('/savemix/{name}', save_mixtape, methods=['POST']),
     Route('/mix/{name}', create_mixtape, methods=['POST']),
     Route('/mix/{name}', delete_mixtape, methods=['DELETE']),
+    Route('/mix/{name}', get_mixtape, methods=['GET']),
     Route('/update', update, methods=['POST']),
     Route('/setting/{name}/{value}', setting, methods=['POST']),
     Route('/replaygain', replaygain, methods=['GET']),
@@ -302,6 +314,7 @@ app = Starlette(debug=True, routes=[
     Route('/skip', skip, methods=['POST']),
     Route('/pause', pause, methods=['POST']),
     Route('/volume/{vol}', volume, methods=['POST']),
+
 
     Mount('/ui', app=StaticFiles(directory=get_static_path()), name="ui"),
 ], lifespan=lifespan)
