@@ -47,7 +47,11 @@ async def status(request):
 
 
 async def play(request):
-    status = await player.play()
+    params = await request.json()
+    songpos = params.get("songpos")
+    if songpos == None:
+        songpos = 0
+    status = await player.play(songpos)
     if status == False:
         return JSONResponse(status_json("Error", await player.error_message))
     return JSONResponse(status_json("OK"))
@@ -129,7 +133,9 @@ async def queue(request):
 
 
 async def skip(request):
-    await player.skip()
+    result = await player.skip()
+    if result == False:
+        return JSONResponse(status_json("Error", player.error_message))
     return JSONResponse(status_json("OK"))
 
 
@@ -158,9 +164,7 @@ async def playsong(request):
     if uri == None:
         return JSONResponse(status_json("Error", "No URI provided"))
 
-    # id = request.path_params["id"]
     status = await player.status()
-    # uri = data.get_uri(con, id)
     if status.get("state") == "play":
         result = await player.play_next(uri, status)
         if not result:

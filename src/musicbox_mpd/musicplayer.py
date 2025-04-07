@@ -12,9 +12,8 @@ class MusicPlayer:
         self.port = port
         self.client = None  # self.create_client()
 
-    """ Check if the client is connected to the server, if not, connect """
-
     async def connect(self):
+        """ Check if the client is connected to the server, if not, connect """
         if self.client == None:
             self.client = self.create_client()
             await self.client.connect(self.host, self.port)
@@ -117,10 +116,10 @@ class MusicPlayer:
             return False
         return True
 
-    async def play(self):
+    async def play(self, songpos=0):
         try:
             await self.connect()
-            await self.client.play(0)
+            await self.client.play(songpos)
         except Exception as e:
             print(f"Error playing song: {e}")
             self.error_message = str(e)
@@ -217,6 +216,7 @@ class MusicPlayer:
             await self.client.next()
         except Exception as e:
             print(f"Error skipping song: {e}")
+            self.error_message = str(e)
             return False
         return True
 

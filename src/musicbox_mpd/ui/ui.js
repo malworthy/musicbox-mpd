@@ -67,8 +67,6 @@ function updatePlayTime() {
     playTime.innerHTML = "";
     return;
   } else if (playStatus === "play") {
-    //const playBtn = document.getElementById("play");
-    //playBtn.innerHTML = "Stop";
     elapsed++;
     if (elapsed > duration) {
       updateStatus();
@@ -94,7 +92,7 @@ async function updateStatus(updateContent = true) {
     duration = songDetails.duration;
     songName.innerHTML = songDetails.title;
     artistName.innerHTML = songDetails.artist;
-    playBtn.innerHTML = `<img width="16px" height="16px" src="ui/stop-solid.svg" />`;
+    playBtn.innerHTML = `<img width="16px" height="16px" src="ui/img/stop-solid.svg" />`;
     playBtn.onclick = () => stopPlay();
     if (updateContent && !showingResults) showCoverArt(songDetails);
     playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
@@ -103,7 +101,7 @@ async function updateStatus(updateContent = true) {
     playTime.innerHTML = "";
     songName.innerHTML = "Stopped";
     artistName.innerHTML = "Playing";
-    playBtn.innerHTML = `<img style="padding-left:2px" width="16px" height="16px" src="ui/play-solid.svg" />`;
+    playBtn.innerHTML = `<img style="padding-left:2px" width="16px" height="16px" src="ui/img/play-solid.svg" />`;
     playBtn.onclick = () => play();
     if (updateContent && !showingResults) showStartScreen();
   }
@@ -120,9 +118,9 @@ async function pause() {
   updateStatus();
 }
 
-async function play() {
+async function play(songpos) {
   showingResults = false;
-  const status = await doAjax("POST", "play");
+  const status = await doAjax("POST", "play", { songpos: songpos });
   if (status.status === "Error") showError(status.message);
   else updateStatus();
 }
@@ -157,7 +155,11 @@ async function playOneSong(filename, listItem) {
 }
 
 async function skip() {
-  await doAjax("POST", "skip");
+  const result = await doAjax("POST", "skip");
+  if (result.status === "Error") {
+    showError(result.message);
+    return;
+  }
   updateStatus();
 }
 
@@ -285,13 +287,13 @@ function mixtapeDelete(name) {
 function addButton(text, clickEvent) {
   let button = document.createElement("button");
   if (text === "Play") {
-    button.innerHTML = "<img style='padding-left:2px' width='16px' height='16px' src='ui/play-solid.svg' />";
+    button.innerHTML = "<img style='padding-left:2px' width='16px' height='16px' src='ui/img/play-solid.svg' />";
   } else if (text === "Add") {
-    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/plus-solid.svg' />";
+    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/img/plus-solid.svg' />";
   } else if (text === "Del") {
-    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/trash-solid.svg' />";
+    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/img/trash-solid.svg' />";
   } else if (text === "Save") {
-    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/floppy-disk-solid.svg' />";
+    button.innerHTML = "<img style='padding-left:1px' width='16px' height='16px' src='ui/img/floppy-disk-solid.svg' />";
   }
   button.onclick = clickEvent;
   button.style.margin = "3px";
@@ -412,6 +414,7 @@ async function getQueue() {
     <p>${song.artist ?? ""} - ${song.album ?? ""}</p>`;
 
     const divButtons = document.createElement("div");
+    divButtons.appendChild(addButton("Play", () => play(song.pos)));
     divButtons.appendChild(addButton("Del", () => removeFromQueue(song.id, listItem)));
 
     listItem.appendChild(divText);
@@ -447,16 +450,16 @@ function showCoverArt(songDetails) {
   <div class="center">
     <ul class="controls">
       <li style="background-color: black;" class="list-item">
-        <button class="black-button" onclick="volume(-5);"><img style=" padding-left:1px" width="16px" height="16px" src="ui/minus-solid.svg" /></button>
+        <button class="black-button" onclick="volume(-5);"><img style=" padding-left:1px" width="16px" height="16px" src="ui/img/minus-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="black-button" onclick="skip();"><img style=" padding-left:2px" width="16px" height="16px" src="ui/forward-solid.svg" /></button>
+        <button class="black-button" onclick="skip();"><img style=" padding-left:2px" width="16px" height="16px" src="ui/img/forward-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="black-button" id="pause" onclick="pause()"><img style=" padding-left:1px" width="16px" height="16px" src="ui/pause-solid.svg" /></button>
+        <button class="black-button" id="pause" onclick="pause()"><img style=" padding-left:1px" width="16px" height="16px" src="ui/img/pause-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="black-button" onclick="volume(5);"><img style=" padding-left:1px" width="16px" height="16px" src="ui/plus-solid.svg" /></button>
+        <button class="black-button" onclick="volume(5);"><img style=" padding-left:1px" width="16px" height="16px" src="ui/img/plus-solid.svg" /></button>
       </li>
     </ul>
   </div>
