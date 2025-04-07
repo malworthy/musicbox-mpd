@@ -78,23 +78,6 @@ function updatePlayTime() {
   playTime.innerHTML = `${fmtMSS(elapsed)}/${fmtMSS(duration)}`;
 }
 
-var forceRedraw = function (element) {
-  if (!element) {
-    return;
-  }
-
-  var n = document.createTextNode(" ");
-  var disp = element.style.display; // don't worry about previous display style
-
-  element.appendChild(n);
-  element.style.display = "none";
-
-  setTimeout(function () {
-    element.style.display = disp;
-    n.parentNode.removeChild(n);
-  }, 20); // you can play with this timeout to make it as short as possible
-};
-
 async function updateStatus(updateContent = true) {
   const songName = document.getElementById("songName");
   const artistName = document.getElementById("artistName");
@@ -113,7 +96,6 @@ async function updateStatus(updateContent = true) {
     artistName.innerHTML = songDetails.artist;
     playBtn.innerHTML = `<img width="16px" height="16px" src="ui/stop-solid.svg" />`;
     playBtn.onclick = () => stopPlay();
-    //forceRedraw(playBtn); // Fix IOS bug where it refuses to update text on the button
     if (updateContent && !showingResults) showCoverArt(songDetails);
     playTime.innerHTML = `${fmtMSS(songDetails.elapsed)} / ${fmtMSS(songDetails.duration)}`;
   } else {
@@ -195,7 +177,6 @@ async function updateQueueStatus() {
 async function queueAlbum(path, listItem) {
   await doAjax("POST", "queuealbum", { path: path });
   updateStatus();
-  //listItem = document.getElementById(`row${row}`);
   listItem.className = "added";
 }
 
@@ -264,20 +245,20 @@ function encodeStrParam(str) {
 async function getMixtapes() {
   var mixtapes = await doAjax("GET", "mix");
   if (mixtapes === null) return;
-  let i = 1;
   document.getElementById("content").innerHTML = "";
+
   for (const tape of mixtapes) {
     const listItem = document.createElement("li");
     listItem.className = "list-item";
     const divText = document.createElement("div");
 
-    divText.innerHTML = `<h4>${i++}. <a href="#" onclick="getMixtape('${encodeStrParam(tape.playlist)}')"> ${
+    divText.innerHTML = `<h4><a href="#" onclick="getMixtape('${encodeStrParam(tape.playlist)}')"> ${
       tape.playlist
     }</a></h4>`;
 
     const divButtons = document.createElement("div");
-    divButtons.appendChild(addButton("Save", () => mixtapeSave(tape.playlist)));
     divButtons.appendChild(addButton("Add", () => mixtapeAdd(tape.playlist)));
+    divButtons.appendChild(addButton("Save", () => mixtapeSave(tape.playlist)));
     divButtons.appendChild(addButton("Del", () => mixtapeDelete(tape.playlist)));
 
     listItem.appendChild(divText);
@@ -394,7 +375,6 @@ async function doSearch() {
     document.getElementById("content").appendChild(listItem);
   }
   if (prevRowIndex != null) {
-    //if (prevRowIndex > 0) prevRowIndex--;
     const prevElement = `row${prevRowIndex}`;
     const element = document.getElementById(prevElement);
     element?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
@@ -467,16 +447,16 @@ function showCoverArt(songDetails) {
   <div class="center">
     <ul class="controls">
       <li style="background-color: black;" class="list-item">
-        <button class="black-button" onclick="volume(-5);"><img style="filter: invert(1); padding-left:1px" width="16px" height="16px" src="ui/minus-solid.svg" /></button>
+        <button class="black-button" onclick="volume(-5);"><img style=" padding-left:1px" width="16px" height="16px" src="ui/minus-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="black-button" onclick="skip();"><img style="filter: invert(1); padding-left:2px" width="16px" height="16px" src="ui/forward-solid.svg" /></button>
+        <button class="black-button" onclick="skip();"><img style=" padding-left:2px" width="16px" height="16px" src="ui/forward-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="black-button" id="pause" onclick="pause()"><img style="filter: invert(1); padding-left:1px" width="16px" height="16px" src="ui/pause-solid.svg" /></button>
+        <button class="black-button" id="pause" onclick="pause()"><img style=" padding-left:1px" width="16px" height="16px" src="ui/pause-solid.svg" /></button>
       </li>
       <li style="background-color: black;" class="list-item">
-        <button class="black-button" onclick="volume(5);"><img style="filter: invert(1); padding-left:1px" width="16px" height="16px" src="ui/plus-solid.svg" /></button>
+        <button class="black-button" onclick="volume(5);"><img style=" padding-left:1px" width="16px" height="16px" src="ui/plus-solid.svg" /></button>
       </li>
     </ul>
   </div>
@@ -575,10 +555,8 @@ async function setReplayGain() {
 }
 
 function changeSetting(setting) {
-  //document.getElementById(setting).checked = !document.getElementById(setting).checked;
   const value = document.getElementById(setting).checked;
   console.log("Changing setting", setting, value);
-  //console.log(setting, value);
   const bitValue = value ? 1 : 0;
   const result = doAjax("POST", `setting/${setting}/${bitValue}`);
 }
