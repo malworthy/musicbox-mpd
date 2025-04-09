@@ -6,7 +6,7 @@ import time
 
 def get_args():
     parser = argparse.ArgumentParser(
-        prog='Playcounter',
+        prog='playcounter-mpd',
         description='Records play counts for songs played on MPD')
     # parser.add_argument('-v', '--version', action='store_true')
     parser.add_argument('-s', '--server')
