@@ -33,7 +33,10 @@ def homepage(request):
 
 
 async def get_version(request):
-    return JSONResponse({'musicbox': __about__.__version__, 'mpd': await player.get_mpd_version()})
+    stats = await player.get_stats()
+    response = {'musicbox': __about__.__version__, 'mpd': await player.get_mpd_version()}
+    response["stats"] = stats
+    return JSONResponse(response)
 
 
 async def status(request):

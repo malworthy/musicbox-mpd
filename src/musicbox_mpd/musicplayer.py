@@ -54,6 +54,15 @@ class MusicPlayer:
             self.error_message = str(e)
             return "Error getting MPD version"
 
+    async def get_stats(self):
+        try:
+            await self.connect()
+            return await self.client.stats()
+        except Exception as e:
+            print(f"Error getting status: {e}")
+            self.error_message = str(e)
+            return None
+
     async def add_to_queue(self, uri):
         try:
             await self.connect()
