@@ -31,7 +31,7 @@ Source = "https://github.com/malworthy/musicbox-mpd"
 
 [project.scripts]
 musicbox-mpd = "musicbox_mpd.main:start"
-playcounter-mpd = "playcounter.main:start"
+playcounter-mpd = "musicbox_mpd.playcounter:start"
 
 [tool.hatch.version]
 path = "src/musicbox_mpd/__about__.py"
