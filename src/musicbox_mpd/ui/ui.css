@@ -65,6 +65,10 @@ nav ul {
   padding: 5px;
 }
 
+.stickers {
+  font-size: smaller;
+}
+
 .footer ul {
   width: 100%;
   display: flex;

@@ -217,6 +217,21 @@ function addSongs(songs, showAlbum = true) {
     divText.innerHTML =
       `<h4>${i++}. ${song.title} ${fmtMSS(song.duration)}</h4>
        <p>${song.artist}</p>` + (showAlbum ? `<p>${albumHtml(song, i - 1)}</p>` : "");
+    if (song.stickers) {
+      const divInfo = document.createElement("div");
+      divInfo.className = "stickers";
+      if (song.stickers.lastPlayed) {
+        const date = new Date(song.stickers.lastPlayed * 1000);
+        divInfo.innerHTML += `<p>Played: ${date.toLocaleString()}</p>`;
+      }
+      if (song.stickers.playCount) {
+        divInfo.innerHTML += `<p>Play Count: ${song.stickers.playCount}</p>`;
+      }
+      if (song.stickers.rating) {
+        divInfo.innerHTML += `<p>Rating: ${song.stickers.rating}/10</p>`;
+      }
+      divText.appendChild(divInfo);
+    }
 
     const divButtons = document.createElement("div");
     divButtons.style.minWidth = "92px";

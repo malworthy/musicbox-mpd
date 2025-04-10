@@ -389,9 +389,11 @@ class MusicPlayer:
             for sticker in stickers:
                 file = sticker.get("file")
                 results = await self.client.listallinfo(file)
+                other_stickers = await self.client.sticker_list("song", file)
                 info = results[0]
                 info["lastPlayed"] = self.extract_sticker_value(sticker)
                 info["path"] = os.path.dirname(file) + "/"
+                info["stickers"] = other_stickers
                 result.append(info)
 
             return result
