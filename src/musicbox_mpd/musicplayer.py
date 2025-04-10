@@ -42,7 +42,7 @@ class MusicPlayer:
 
         con.execute("delete from library where radio != 1")
         con.executemany(
-            "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year) values (?,?,?,?,?,?,?,?)", result)
+            "insert into library(file ,title, artist, album, albumartist, tracknumber, duration, year) values (?,?,?,?,?,?,?,?)", result)
         print("Library cached")
 
     async def get_mpd_version(self):
@@ -105,10 +105,15 @@ class MusicPlayer:
             return False
         return True
 
+    def add_path_to_result(self, result):
+        for row in result:
+            row["path"] = os.path.dirname(row.get("file")) + "/"
+
     async def get_queue(self):
         try:
             await self.connect()
             queue = await self.client.playlistinfo()
+            self.add_path_to_result(queue)
         except Exception as e:
             print(f"Error getting queue: {e}")
             self.error_message = str(e)
@@ -271,6 +276,7 @@ class MusicPlayer:
         try:
             await self.connect()
             songs = await self.client.listplaylistinfo(name)
+            self.add_path_to_result(songs)
         except Exception as e:
             print(f"Error listing playlist: {e}")
             self.error_message = str(e)
@@ -385,6 +391,7 @@ class MusicPlayer:
                 results = await self.client.listallinfo(file)
                 info = results[0]
                 info["lastPlayed"] = self.extract_sticker_value(sticker)
+                info["path"] = os.path.dirname(file) + "/"
                 result.append(info)
 
             return result

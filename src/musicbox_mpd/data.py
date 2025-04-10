@@ -10,13 +10,13 @@ def in_memory_db():
         create table library
         (
             id INTEGER PRIMARY KEY, 
-            filename text, 
-            tracktitle text, 
+            file text, 
+            title text, 
             artist text, 
             album text, 
             albumartist text, 
             tracknumber int, 
-            length int, 
+            duration int, 
             year text,
             radio int
         )
@@ -29,7 +29,7 @@ def in_memory_db():
 
 def get_uri(con, id):
     curs = con.execute(
-        "select filename from library where id = ?", (id,))
+        "select file from library where id = ?", (id,))
     result = curs.fetchone()
     if result == None:
         return None
@@ -38,7 +38,7 @@ def get_uri(con, id):
 
 def get_id(con, uri):
     curs = con.execute(
-        "select id from library where filename = ?", (uri,))
+        "select id from library where file = ?", (uri,))
     result = curs.fetchone()
     if result == None:
         return 0
@@ -52,12 +52,12 @@ def search(con, search):
     sql = """
         select album, 
         case when count(*) > 1 then 'Various' else max(albumartist) end artist, 
-        null as tracktitle, 
+        null as title, 
         0 as id, 
-        0 as length,
+        0 as duration,
         path
         from (
-            select distinct coalesce(albumartist, artist) as albumartist, album,rtrim(filename, replace(filename, '/', '')) as path
+            select distinct coalesce(albumartist, artist) as albumartist, album,rtrim(file, replace(file, '/', '')) as path
             from library 
             where album like ? or artist like ? or albumartist like ? or year like ?
         ) sq 
@@ -67,11 +67,11 @@ def search(con, search):
     if include_songs:
         sql += """
             union 
-            select album, artist, tracktitle, id, length, rtrim(filename, replace(filename, '/', '')) as path
+            select album, artist, title, id, duration, rtrim(file, replace(file, '/', '')) as path
             from library
-            where tracktitle like ?"""
+            where title like ?"""
 
-    sql += "order by tracktitle, artist;"
+    sql += "order by title, artist;"
 
     if include_songs:
         return query(con, sql, (x, x, x, x, x))
@@ -80,17 +80,17 @@ def search(con, search):
 
 
 def get_album(con, path):
-    sql = "select * from library where rtrim(filename, replace(filename, '/', '')) = ? order by artist, album, cast(tracknumber as INT), filename"
+    sql = "select * from library where rtrim(file, replace(file, '/', '')) = ? order by artist, album, cast(tracknumber as INT), file"
     return query(con, sql, (path,))
 
 
 def get_random_songs(con, number):
-    sql = f"select filename from library order by random() limit {number}"
+    sql = f"select file from library order by random() limit {number}"
     return query(con, sql, ())
 
 
 def add_radio_stations(con, stations):
-    sql = "insert into library(filename,tracktitle,artist, album, albumartist, tracknumber, length, year, radio) values (?,?,?,?,?,?,?,?,1)"
+    sql = "insert into library(file,title,artist, album, albumartist, tracknumber, duration, year, radio) values (?,?,?,?,?,?,?,?,1)"
     count = 1
     for station in stations:
         url = station.get("url")

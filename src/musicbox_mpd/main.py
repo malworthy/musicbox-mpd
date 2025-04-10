@@ -153,9 +153,15 @@ async def volume(request):
     return JSONResponse(status_json(result))
 
 
+def get_path(path):
+    if path.endswith("/"):
+        return path[:-1]
+    return path
+
+
 async def queuealbum(request):
     params = await request.json()
-    uri = params["path"][:-1]
+    uri = get_path(params["path"])
     await player.add_to_queue(uri)
 
     return JSONResponse(status_json("OK"))
@@ -186,7 +192,7 @@ async def playsong(request):
 async def playalbum(request):
     status = await player.status()
     json = await request.json()
-    uri = json["path"][:-1]
+    uri = get_path(json["path"])
 
     if status.get("state") == "play":
         return JSONResponse(status_json("notplay"))
@@ -201,7 +207,7 @@ async def playalbum(request):
 async def random_queue(request):
     num = request.path_params["num"]
     for song in data.get_random_songs(con, num):
-        await player.add_to_queue(song["filename"])
+        await player.add_to_queue(song["file"])
     return JSONResponse(status_json("OK"))
 
 

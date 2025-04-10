@@ -192,30 +192,10 @@ async function queueSong(id, listItem) {
 async function getAlbum(name, rowIndex) {
   prevRowIndex = rowIndex;
   var songs = await doAjax("GET", `album?search=${encodeURIComponent(name)}`);
-  if (songs === null) return;
-  let i = 1;
-  document.getElementById("content").innerHTML = "";
-  for (const song of songs) {
-    const listItem = document.createElement("li");
-    listItem.className = "list-item";
-    const divText = document.createElement("div");
-    listItem.id = `song_row${i}`;
-    divText.innerHTML = `<h4>${i++}. ${song.tracktitle} ${fmtMSS(song.length)}</h4>
-    <p>${song.artist} - ${song.album}</p>`;
-
-    const divButtons = document.createElement("div");
-    divButtons.appendChild(addButton("Play", () => playOneSong(song.filename, listItem)));
-    divButtons.appendChild(addButton("Add", () => queueSong(song.id, listItem)));
-
-    listItem.appendChild(divText);
-    listItem.appendChild(divButtons);
-    document.getElementById("content").appendChild(listItem);
-  }
-  const firstRow = document.getElementById("song_row1");
-  firstRow?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+  addSongs(songs, false);
 }
 
-async function getHistory(name) {
+async function getHistory() {
   var songs = await doAjax("GET", `history`);
   addSongs(songs);
 }
@@ -225,7 +205,7 @@ async function getMixtape(name) {
   addSongs(songs);
 }
 
-function addSongs(songs) {
+function addSongs(songs, showAlbum = true) {
   if (songs === null) return;
   let i = 1;
   document.getElementById("content").innerHTML = "";
@@ -234,10 +214,12 @@ function addSongs(songs) {
     listItem.className = "list-item";
     const divText = document.createElement("div");
     listItem.id = `song_row${i}`;
-    divText.innerHTML = `<h4>${i++}. ${song.title} ${fmtMSS(song.duration)}</h4>
-    <p>${song.artist} - ${song.album}</p>`;
+    divText.innerHTML =
+      `<h4>${i++}. ${song.title} ${fmtMSS(song.duration)}</h4>
+       <p>${song.artist}</p>` + (showAlbum ? `<p>${albumHtml(song, i - 1)}</p>` : "");
 
     const divButtons = document.createElement("div");
+    divButtons.style.minWidth = "92px";
     divButtons.appendChild(addButton("Play", () => playOneSong(song.file, listItem)));
     divButtons.appendChild(addButton("Add", () => queueSong(song.id, listItem)));
 
@@ -268,6 +250,7 @@ async function getMixtapes() {
     }</a></h4>`;
 
     const divButtons = document.createElement("div");
+    divButtons.style.minWidth = "138px";
     divButtons.appendChild(addButton("Add", () => mixtapeAdd(tape.playlist)));
     divButtons.appendChild(addButton("Save", () => mixtapeSave(tape.playlist)));
     divButtons.appendChild(addButton("Del", () => mixtapeDelete(tape.playlist)));
@@ -406,8 +389,8 @@ async function doSearch() {
     listItem.className = "list-item";
     listItem.id = `row${i++}`;
     const divText = document.createElement("div");
-    if (album.tracktitle) {
-      divText.innerHTML = `<h4>${getIcon("song")}${album.tracktitle}</h4><p>${album.artist}</p><p>${albumHtml(
+    if (album.title) {
+      divText.innerHTML = `<h4>${getIcon("song")}${album.title}</h4><p>${album.artist}</p><p>${albumHtml(
         album,
         i - 1
       )}</p>`;
@@ -417,8 +400,8 @@ async function doSearch() {
     }
     const divButtons = document.createElement("div");
     divButtons.style.minWidth = "92px";
-    if (album.tracktitle) {
-      divButtons.appendChild(addButton("Play", () => playOneSong(album.filename, listItem)));
+    if (album.title) {
+      divButtons.appendChild(addButton("Play", () => playOneSong(album.file, listItem)));
       divButtons.appendChild(addButton("Add", () => queueSong(album.id, listItem)));
     } else {
       divButtons.appendChild(addButton("Play", () => playAlbum(album.path, listItem)));
@@ -463,9 +446,10 @@ async function getQueue() {
     listItem.className = "list-item";
     const divText = document.createElement("div");
     divText.innerHTML = `<h4>${i++}. ${song.title ?? song.file} ${fmtMSS(song.duration)}</h4>
-    <p>${song.artist ?? ""} - ${song.album ?? ""}</p>`;
+    <p>${song.artist ?? ""}</p><p>${albumHtml(song, i - 1)}</p>`;
 
     const divButtons = document.createElement("div");
+    divButtons.style.minWidth = "92px";
     divButtons.appendChild(addButton("Play", () => play(song.pos)));
     divButtons.appendChild(addButton("Del", () => removeFromQueue(song.id, listItem)));
 
