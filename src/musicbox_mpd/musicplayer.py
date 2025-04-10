@@ -366,3 +366,30 @@ class MusicPlayer:
             print(f"Error in shuffle: {e}")
             self.error_message = str(e)
             return False
+
+    def extract_sticker_value(self, row):
+        sticker = row.get("sticker")
+        if sticker is None:
+            return None
+        sticker = sticker.split("=")
+        return sticker[1] if len(sticker) > 1 else None
+
+    async def play_history(self):
+        result = []
+        try:
+            await self.connect()
+            stickers = await self.client.sticker_find("song", "", "lastPlayed")
+            stickers.sort(key=self.extract_sticker_value, reverse=True)
+            for sticker in stickers:
+                file = sticker.get("file")
+                results = await self.client.listallinfo(file)
+                info = results[0]
+                info["lastPlayed"] = self.extract_sticker_value(sticker)
+                result.append(info)
+
+            return result
+
+        except Exception as e:
+            print(f"Error getting play history: {e}")
+            self.error_message = str(e)
+            return None

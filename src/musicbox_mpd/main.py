@@ -279,6 +279,13 @@ async def shuffle(request):
     return JSONResponse(status_json("OK", result))
 
 
+async def history(request):
+    result = await player.play_history()
+    if result == None:
+        return JSONResponse(status_json("Error", player.error_message))
+    return JSONResponse(result)
+
+
 @contextlib.asynccontextmanager
 async def lifespan(app):
     print("Run at startup!")
@@ -317,6 +324,7 @@ app = Starlette(debug=True, routes=[
     Route('/replaygain', replaygain, methods=['GET']),
     Route('/replaygain', set_replaygain, methods=['POST']),
     Route('/shuffle', shuffle, methods=["POST"]),
+    Route('/history', history, methods=["GET"]),
 
     Route('/skip', skip, methods=['POST']),
     Route('/pause', pause, methods=['POST']),

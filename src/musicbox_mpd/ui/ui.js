@@ -215,8 +215,17 @@ async function getAlbum(name, rowIndex) {
   firstRow?.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 }
 
+async function getHistory(name) {
+  var songs = await doAjax("GET", `history`);
+  addSongs(songs);
+}
+
 async function getMixtape(name) {
   var songs = await doAjax("GET", `mix/${encodeURIComponent(name)}`);
+  addSongs(songs);
+}
+
+function addSongs(songs) {
   if (songs === null) return;
   let i = 1;
   document.getElementById("content").innerHTML = "";
@@ -345,6 +354,9 @@ async function doCommand(command) {
     
     `;
     showInfo(info, "About MusicBox");
+  } else if (command.startsWith(":h")) {
+    //:history
+    await getHistory();
   } else {
     return;
   }
