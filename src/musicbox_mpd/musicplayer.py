@@ -7,30 +7,43 @@ import time
 
 class MusicPlayer:
 
-    def __init__(self, host="localhost", port=6600):
+    def __init__(self, host="localhost", port=6600, password=None):
         self.host = host
         self.port = port
+        self.password = password
         self.client = None  # self.create_client()
+        self.has_connected = False
 
     async def connect(self):
         """ Check if the client is connected to the server, if not, connect """
         if self.client == None:
             self.client = self.create_client()
             await self.client.connect(self.host, self.port)
+            self.has_connected = True
             return
 
         try:
             await self.client.ping()
+            self.has_connected = True
         except mpd.ConnectionError as e:
             print(f"Reconnecting to server: {e}")
             await self.client.connect(self.host, self.port)
         except Exception as e:
             print(f"Exception occurred connecting: {e}")
 
+    def disconnect(self):
+        """ Disconnect from the server """
+        if self.client != None:
+            # self.client.close()
+            self.client.disconnect()
+            self.client = None
+
     def create_client(self):
         client = MPDClient()
         client.timeout = 10
         client.idletimeout = None
+        if self.password != None:
+            client.password(self.password)
         return client
 
     async def cache_library(self, con):
@@ -152,9 +165,8 @@ class MusicPlayer:
     async def status(self):
         try:
             await self.connect()
-            s = await self.client.status()
-            songid = s.get("songid")
-            result = s
+            result = await self.client.status()
+            songid = result.get("songid")
             if songid != None:
                 d = await self.client.playlistid(songid)
 
@@ -162,10 +174,11 @@ class MusicPlayer:
                     result["title"] = d[0].get("title")
                     result["artist"] = d[0].get("artist")
                     result["file"] = d[0].get("file")
+            result["hasConnected"] = self.has_connected
             return result
         except Exception as e:
             print(f"Error getting status: {e}")
-            return {}
+            return {"hasConnected": self.has_connected}
 
     async def pause(self):
         try:

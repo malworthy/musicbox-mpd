@@ -1,5 +1,31 @@
 <div class="settings">
-  <h2>Settings</h2>
+  <h2>Musicbox Settings</h2>
+  <div style="display: flex; flex-direction: column">
+    <label for="mpdHost">MPD Server name</label>
+    <input placeholder="" type="text" id="mpdHost" style="width: 90%" />
+  </div>
+  <div style="display: flex; flex-direction: column">
+    <label for="mpdPort">MPD Port</label>
+    <input placeholder="" type="text" id="mpdPort" style="width: 90%" />
+  </div>
+  <div style="display: flex; flex-direction: column">
+    <label for="mpdPassword">MPD Password</label>
+    <input placeholder="" type="password" id="mpdPassword" style="width: 90%" />
+  </div>
+  <div style="display: flex; flex-direction: column">
+    <label for="mbHost">Musicbox Host name</label>
+    <input placeholder="" type="text" id="mbHost" style="width: 90%" />
+  </div>
+  <div style="display: flex; flex-direction: column">
+    <label for="mbPort">Musicbox Port</label>
+    <input placeholder="" type="text" id="mbPort" style="width: 90%" />
+  </div>
+  <div style="margin-top: 10px">
+    <button class="button-text" onclick="saveMbSettings()">Apply</button>
+  </div>
+</div>
+<div class="settings" id="mpdSettings">
+  <h2>MPD Settings</h2>
   <div style="display: flex">
     <label>Random</label>
     <div class="checkbox-wrapper-6" style="margin-left: auto; padding: 5px">

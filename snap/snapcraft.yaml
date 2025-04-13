@@ -1,0 +1,37 @@
+name: musicbox-mpd
+summary: a MPD Client
+description: |
+  a web based MPD Client
+version: test
+base: core22
+confinement: strict
+
+parts:
+  musicbox-mpd:
+    plugin: python
+    source: .
+
+apps:
+  musicbox-daemon:
+    command: bin/musicbox-mpd
+    daemon: simple
+    plugs:
+      - network
+      - network-bind
+
+  musicbox-mpd:
+    command: bin/musicbox-mpd
+    plugs:
+      - network
+      - network-bind
+
+  playcounter-daemon:
+    command: bin/playcounter-mpd
+    daemon: simple
+    plugs:
+      - network
+
+  playcounter-mpd:
+    command: bin/playcounter-mpd
+    plugs:
+      - network

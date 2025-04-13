@@ -569,6 +569,25 @@ function showStartScreen() {
   `;
 }
 
+async function saveMbSettings() {
+  const config = {
+    mpdHost: document.getElementById("mpdHost").value,
+    mpdPort: document.getElementById("mpdPort").value,
+    host: document.getElementById("mbHost").value,
+    port: document.getElementById("mbPort").value,
+  };
+  const password = document.getElementById("mpdPassword").value;
+
+  if (password) config.password = password;
+
+  const response = await doAjax("POST", "config", config);
+  if (response.status === "Error") {
+    showError(response.message);
+  } else {
+    //showInfo("Settings saved successfully", "Success");
+  }
+}
+
 async function showSettings() {
   const doc = document.getElementById("content");
 
@@ -582,7 +601,18 @@ async function showSettings() {
   }
   doc.innerHTML = html;
 
+  const config = await doAjax("GET", "config");
+  document.getElementById("mpdHost").value = config.mpd_host;
+  document.getElementById("mpdPort").value = config.mpd_port;
+  if (config.password) document.getElementById("mpdPassword").value = config.password;
+  document.getElementById("mbHost").value = config.host;
+  document.getElementById("mbPort").value = config.port;
+
   const status = await doAjax("GET", "status");
+  if (!status.hasConnected) {
+    document.getElementById("mpdSettings").innerHTML = "<h2>MPD Settings</h2><h3>Not connected to MPD</h3>";
+    return;
+  }
 
   document.getElementById("random").checked = status.random == 1;
   document.getElementById("repeat").checked = status.repeat == 1;

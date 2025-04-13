@@ -22,7 +22,7 @@ def get_args():
     return parser.parse_args()
 
 
-async def try_cache_library(player, con):
+async def try_cache_library(player, con, use_backoff=True):
     backoff = [5, 10, 30, 60, 120]
     for i in range(5):
         try:
@@ -30,6 +30,8 @@ async def try_cache_library(player, con):
             return
         except Exception as e:
             print(f"Error caching library: {e}")
+            if not use_backoff:
+                return
             print(f"Retrying in {backoff[i]} seconds")
             time.sleep(backoff[i])
 
@@ -58,24 +60,40 @@ def get_default_config(create=False):
     return default_config
 
 
-def get_config(from_arg):
-    default_config = get_default_config()
+def get_config_file(from_arg):
     if from_arg == None:
-        config_file = "/etc/musicbox-mpd.conf.json"
+        folder = os.environ.get("SNAP_COMMON")
+        if folder == None:
+            folder = "/etc"
+        config_file = os.path.join(folder, "musicbox-mpd.conf.json")
     else:
         config_file = from_arg
+
+    return config_file
+
+
+def save_config(config):
+    args = get_args()
+    config_file = get_config_file(args.configfile)
+    with open(config_file, "w") as json_file:
+        json.dump(config, json_file, indent=4)
+
+
+def get_config(from_arg):
+    default_config = get_default_config()
+    config_file = get_config_file(from_arg)
 
     if pathlib.Path(config_file).is_file():
         try:
             f = open(config_file)
             config = json.load(f)
             f.close()
-            return config
+            return (config, True)
         except Exception as e:
             print(f"Error loading config file: {e}")
 
     print("No config file found, using defaults")
-    return json.loads(default_config)
+    return (json.loads(default_config), False)
 
 
 def create_service():

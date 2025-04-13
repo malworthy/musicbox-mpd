@@ -91,7 +91,11 @@ async def coverart(request):
     if uri == None:
         return FileResponse(default_image)
 
-    image_folder = config.get("image_folder")
+    image_folder = os.environ.get("SNAP_COMMON")
+    if image_folder == None:
+        image_folder = config.get("image_folder")
+    else:
+        image_folder = os.path.join(image_folder, "coverart")
     cover = await player.get_cover_art(uri, image_folder)
 
     if cover == None:
@@ -292,10 +296,35 @@ async def history(request):
     return JSONResponse(result)
 
 
+async def get_config(request):
+    return JSONResponse(config)
+
+
+async def set_config(request):
+    new_config = await request.json()
+    config["mpd_host"] = new_config.get("mpdHost", config["mpd_host"])
+    config["mpd_port"] = new_config.get("mpdPort", config["mpd_port"])
+    pwd = new_config.get("password", config.get("password"))
+    if pwd != None:
+        config["password"] = pwd
+        player.password = config["password"]
+    config["host"] = new_config.get("host", config["host"])
+    config["port"] = new_config.get("port", config["port"])
+    player.disconnect()
+    player.host = config["mpd_host"]
+    player.port = config["mpd_port"]
+
+    try:
+        startup.save_config(config)
+        return JSONResponse(status_json("OK"))
+    except Exception as e:
+        return JSONResponse(status_json("Error", str(e)))
+
+
 @contextlib.asynccontextmanager
 async def lifespan(app):
     print("Run at startup!")
-    await startup.try_cache_library(player, con)
+    await startup.try_cache_library(player, con, config_exists)
     startup.add_radio_stations(con, config.get("stations"))
     yield
     print("Run on shutdown!")
@@ -331,6 +360,8 @@ app = Starlette(debug=True, routes=[
     Route('/replaygain', set_replaygain, methods=['POST']),
     Route('/shuffle', shuffle, methods=["POST"]),
     Route('/history', history, methods=["GET"]),
+    Route('/config', get_config, methods=["GET"]),
+    Route('/config', set_config, methods=["POST"]),
 
     Route('/skip', skip, methods=['POST']),
     Route('/pause', pause, methods=['POST']),
@@ -341,9 +372,10 @@ app = Starlette(debug=True, routes=[
 ], lifespan=lifespan)
 
 args = startup.get_args()
-config = startup.get_config(args.configfile)
+config, config_exists = startup.get_config(args.configfile)
 con = data.in_memory_db()
-player = MusicPlayer(config["mpd_host"], config["mpd_port"])
+player = MusicPlayer(config["mpd_host"],
+                     config["mpd_port"], config.get("password"))
 
 
 def start():
