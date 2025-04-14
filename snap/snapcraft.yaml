@@ -2,7 +2,7 @@ name: musicbox-mpd
 summary: a MPD Client
 description: |
   a web based MPD Client
-version: test
+version: 0.3.0
 base: core22
 confinement: strict
 
