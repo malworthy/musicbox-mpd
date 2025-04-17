@@ -4,4 +4,4 @@ config.json
 *.pyc
 dist/*
 config.old.json
-musicbox-mpd_test_amd64.snap
+*.snap

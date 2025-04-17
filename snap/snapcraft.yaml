@@ -1,5 +1,5 @@
 name: musicbox-mpd
-summary: a MPD Client
+summary: A web based MPD Client
 description: |
   a web based MPD Client
 version: 0.3.0

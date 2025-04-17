@@ -13,6 +13,7 @@ class MusicPlayer:
         self.password = password
         self.client = None  # self.create_client()
         self.has_connected = False
+        self.error_message = ""
 
     async def connect(self):
         """ Check if the client is connected to the server, if not, connect """
@@ -53,7 +54,7 @@ class MusicPlayer:
         result = [(x.get("file"), x.get("title"), x.get("artist"), x.get("album"), x.get(
             "albumartist"), x.get("track"), x.get("time"), x.get("date")) for x in songs]
 
-        con.execute("delete from library where radio != 1")
+        con.execute("delete from library where radio != 1 or radio is null")
         con.executemany(
             "insert into library(file ,title, artist, album, albumartist, tracknumber, duration, year) values (?,?,?,?,?,?,?,?)", result)
         print("Library cached")
@@ -175,6 +176,8 @@ class MusicPlayer:
                     result["artist"] = d[0].get("artist")
                     result["file"] = d[0].get("file")
             result["hasConnected"] = self.has_connected
+            result["musicboxError"] = self.error_message
+
             return result
         except Exception as e:
             print(f"Error getting status: {e}")
@@ -203,6 +206,7 @@ class MusicPlayer:
             return s.get("volume")
         except Exception as e:
             print(f"Error setting volume: {e}")
+            self.error_message = str(e)
             return "Cannot set volume"
 
     async def get_cover_art(self, uri, img_folder):

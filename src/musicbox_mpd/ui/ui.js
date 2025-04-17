@@ -540,9 +540,10 @@ function setSongDetails(songDetails) {
   document.getElementById("songDetails").innerHTML = `${file_extension} ${details}`;
 }
 
-function popSearch(command) {
+function popSearch(command, process = false) {
   const element = document.getElementById("search");
   element.value = command;
+  if (process) processCommand();
 }
 
 function showStartScreen() {
@@ -555,15 +556,16 @@ function showStartScreen() {
             <h2>MusicBox</h2>
             <h3>Commands</h3>
             <p><strong><a href="#" onclick="popSearch(':clear')">:clear</a></strong>  - clear the current queue</p>
-            <p><strong><a href="#" onclick="popSearch(':mix')">:mix</a></strong>  - list all mixtapes</p>
+            <p><strong><a href="#" onclick="popSearch(':mix', true)">:mix</a></strong>  - list all mixtapes</p>
             <p><strong><a href="#" onclick="popSearch(':mix ')">:mix [name]</a></strong> - save contents of current queue to a 'mixtape' (aka playlist)</p>
             <p><strong><a href="#" onclick="popSearch(':delmix ')">:delmix [name]</a></strong> - delete a mixtape</p>
             <p><strong><a href="#" onclick="popSearch(':rand ')">:rand [x]</a></strong> - add 'x' number of random songs to the queue</p>
             <p><strong><a href="#" onclick="popSearch(':update')">:update</a></strong> - re-scan music library</p>
-            <p><strong><a href="#" onclick="popSearch(':settings')">:settings</a></strong> - MPD settings</p>
-            <p><strong><a href="#" onclick="popSearch(':shuffle')">:shuffle</a></strong> - shuffle queue</p>
-             <p><strong><a href="#" onclick="popSearch(':error')">:error</a></strong> - show last MPD error</p>
-              <p><strong><a href="#" onclick="popSearch(':about')">:about</a></strong> - about musicbox</p>
+            <p><strong><a href="#" onclick="popSearch(':settings', true)">:settings</a></strong> - MPD settings</p>
+            <p><strong><a href="#" onclick="popSearch(':shuffle', false)">:shuffle</a></strong> - shuffle queue</p>
+            <p><strong><a href="#" onclick="popSearch(':error', true)">:error</a></strong> - show last MPD error</p>
+            <p><strong><a href="#" onclick="popSearch(':history', true)">:history</a></strong> - show play history</p>
+            <p><strong><a href="#" onclick="popSearch(':about', true)">:about</a></strong> - about musicbox</p>
           </div>
         </li>
   `;
@@ -649,6 +651,10 @@ async function checkError() {
   const status = await doAjax("GET", "status");
   if (status.error) {
     showError(status.error);
+  } else if (status.musicboxError != "") {
+    showError(status.musicboxError);
+  } else {
+    showInfo("No current errors", "Musicbox");
   }
 }
 
