@@ -49,7 +49,7 @@ class MusicPlayer:
 
     async def cache_library(self, con):
         await self.connect()
-        print(self.client.mpd_version)
+        # print(self.client.mpd_version)
         songs = await self.client.search("any", "")
         result = [(x.get("file"), x.get("title"), x.get("artist"), x.get("album"), x.get(
             "albumartist"), x.get("track"), x.get("time"), x.get("date")) for x in songs]
@@ -57,7 +57,7 @@ class MusicPlayer:
         con.execute("delete from library where radio != 1 or radio is null")
         con.executemany(
             "insert into library(file ,title, artist, album, albumartist, tracknumber, duration, year) values (?,?,?,?,?,?,?,?)", result)
-        print("Library cached")
+        # print("Library cached")
 
     async def get_mpd_version(self):
         try:

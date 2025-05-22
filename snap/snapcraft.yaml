@@ -2,7 +2,7 @@ name: musicbox-mpd
 summary: A web based MPD Client
 description: |
   a web based MPD Client
-version: 0.3.0
+version: 0.3.1
 base: core22
 confinement: strict
 
@@ -10,6 +10,10 @@ parts:
   musicbox-mpd:
     plugin: python
     source: .
+
+architectures:
+  - build-on: [amd64]
+    build-for: [all]
 
 apps:
   musicbox-daemon:

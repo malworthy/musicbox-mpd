@@ -323,11 +323,9 @@ async def set_config(request):
 
 @contextlib.asynccontextmanager
 async def lifespan(app):
-    print("Run at startup!")
     await startup.try_cache_library(player, con, config_exists)
     startup.add_radio_stations(con, config.get("stations"))
     yield
-    print("Run on shutdown!")
 
 app = Starlette(debug=True, routes=[
     Route('/', homepage),
