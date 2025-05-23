@@ -5,4 +5,4 @@ config.json
 dist/*
 config.old.json
 *.snap
-snap-credentials
+snap-credentials*
