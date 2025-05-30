@@ -7,23 +7,39 @@ Written in python and vanilla.js.
 ## Features
 
 - Mobile friendly interface
-- Album centered design
+- Album centred design
 - Playback controls: Play, Pause, Stop, Next
 - Volume control
 - Album art display
 - Play queue
 - Saved playlist support
-- Search on Album, Artist, Songname and Year
+- Search on Album, Artist, Song name and Year
 - Add any number of random songs to the queue
-- Intelligent handling of complilations with multiple artists
-- Easy to install with minimal dependencies (just 3 python libraries)
+- Intelligent handling of compilations with multiple artists
+- Easy to install with minimal dependencies (just 3 python libraries). Available on snap store.
+- Uninterrupted play. UI is designed so it's almost impossible to accidentally click on another song and interrupt what is currently playing.
 
-## installing/running
+## Installing/running
 
 Pre-installation
 Make sure you have installed and correctly configured MPD
 
-The best way to install musicbox-mpd is va pipx. The instuctions below outline how to install and configure on a Debian based linux distribution. It's best to run musicbox-mpd on the same machine as your MPD server.
+The instuctions below outline how to install and configure on a Debian based linux distribution. It's best to run musicbox-mpd on the same machine as your MPD server.
+
+# Install via the snap store
+
+This is the easiest option as it will also install and configure the services require.
+
+```
+sudo apt install snapd
+sudo snap install musicbox-mpd
+```
+
+You should now be able to browse to http://[name of your MPD server]:8080
+
+# Install via pipx.
+
+If you don't want to install via a snap, you can use pipx and configure the services manually.
 
 1. Install pipx (if not already installed)
 
@@ -144,6 +160,8 @@ Musicbox has a very simple UI design. It contains just one textbox, and forgoes 
 - Commands always start with a colon. Entering a command in the search box will not search your collection, but perform one of the 9 predefined commands.
 - From the start screen, you can click on the command listed at it will pre-populate the search box with that command. Press the "Search" button to execute that command.
 - The start screen is displayed when no music is playing. Once you start playing a song, it will display the album art, along with buttons to pause, skip and change the volume.
+- If you press "play" on another song while play is in progress, that song will be put next in the queue.
+- Unless you press the stop or pause button, the current song will never be interrupted
 
 Commands
 
@@ -152,7 +170,8 @@ Commands
 - :delmix [name of mixtape] - delete a mixtape
 - :rand [x] - add 'x' number of random songs to the queue
 - :update - recan music library
-- :settings - show MPD settings
+- :settings - show settings screen
 - :shuffle - shuffle songs in the current queue
 - :error - show the last error message (if any) from the MPD server
+- :history - show play history
 - :about - display version of musicbox and MPD server

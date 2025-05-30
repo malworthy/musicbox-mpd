@@ -383,6 +383,7 @@ def start():
 
     if args.version:
         print(f"Musicbox MPD version {__about__.__version__}")
+        print(f"Config file path: {startup.get_config_file(args.configfile)}")
         return
 
     if args.create_config:

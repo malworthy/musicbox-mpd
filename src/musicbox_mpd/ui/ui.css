@@ -29,6 +29,7 @@ nav ul {
   box-sizing: border-box;
   padding: 5px;
   background: darkblue;
+  margin: 0px;
 }
 
 .content-list {
