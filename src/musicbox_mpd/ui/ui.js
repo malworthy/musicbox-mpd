@@ -416,7 +416,7 @@ async function doSearch() {
     const divButtons = document.createElement("div");
     divButtons.style.minWidth = "92px";
     if (album.title) {
-      divButtons.appendChild(addButton("Play", () => playOneSong(album.file, listItem)));
+      divButtons.appendChild(addButton("Play", () => playOneSong(album.path, listItem)));
       divButtons.appendChild(addButton("Add", () => queueSong(album.id, listItem)));
     } else {
       divButtons.appendChild(addButton("Play", () => playAlbum(album.path, listItem)));

@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.3.3
+
+- critical bug fix - play button not working for songs
+
 ## 0.3.2
 
 - show location of config file when using --version option

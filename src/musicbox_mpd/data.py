@@ -67,7 +67,7 @@ def search(con, search):
     if include_songs:
         sql += """
             union 
-            select album, artist, title, id, duration, rtrim(file, replace(file, '/', '')) as path
+            select album, artist, title, id, duration, file as path
             from library
             where title like ?"""
 
